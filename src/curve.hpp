@@ -8,12 +8,11 @@ class Curve : public sf::Drawable
   public:
   Curve();
   void addNode(Node);
-  void removeNode(Node);
+  void removeNode(int);
   virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
   bool isSelected;
-  std::list<Node> nodesList;
+  std::vector<Node> nodesList;
   sf::VertexArray points;
   void updatePoints();
 };
 
-class LagrangeInterpolationCurve : public Curve {};

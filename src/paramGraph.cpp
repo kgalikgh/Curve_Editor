@@ -10,14 +10,3 @@ sf::VertexArray makeParamGraph(float a, float b, float step, std::function<float
 	return lines;
 }
 
-sf::VertexArray translateByVector(sf::Vector2f vec, sf::VertexArray arr)
-{
-	std::size_t arr_size = arr.getVertexCount();
-	for(std::size_t i = 0; i < arr_size; i++)
-	{
-		arr[i].position += vec;
-	}
-	return arr;
-}
-
-

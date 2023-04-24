@@ -1,4 +1,5 @@
 #include "curve.hpp"
+#include <iterator>
 
 Curve::Curve() : isSelected(false), points(sf::LineStrip) {}
 
@@ -18,9 +19,9 @@ void Curve::addNode(Node node)
   updatePoints();
 }
 
-void Curve::removeNode(Node node)
+void Curve::removeNode(int index)
 {
-  nodesList.remove(node);
+  nodesList.erase(nodesList.begin() + index);
   updatePoints();
 }
 
