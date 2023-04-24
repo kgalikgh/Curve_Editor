@@ -115,32 +115,117 @@ Panel.Sidebar {
     Button.AddButton {
         Position = (0, 320);
         Renderer = &3;
-        Size = (89, 31.678);
+        Size = (129, 31.678);
         Text = Add;
         TextSize = 13;
     }
 
-    Button.EditButton {
-        Position = (90, 320);
-        Renderer = &3;
-        Size = (89, 31.678);
-        Text = Edit;
-        TextSize = 13;
-    }
-
     Button.DeleteButton {
-        Position = (180, 320);
+        Position = (130, 320);
         Renderer = &3;
-        Size = (89, 31.678);
+        Size = (139, 31.678);
         Text = Delete;
         TextSize = 13;
     }
 
-    Label.ModeText {
-        HorizontalAlignment = Center;
-        Position = (0, 720);
-        Renderer = &2;
-        Size = (100%, 49.2255);
-        TextSize = 30;
+    Group.InspectorGroup {
+        Position = (10, 420);
+        Size = (100%, 120);
+
+        Renderer {
+        }
+
+        ComboBox.CurveTypeCombo {
+            ChangeItemOnScroll = false;
+            ItemsToDisplay = 0;
+            MaximumItems = 0;
+            Position = (130, 50);
+            Size = (120, 21);
+            TextSize = 13;
+
+            Renderer {
+                ArrowBackgroundColor = #F5F5F5;
+                ArrowBackgroundColorHover = white;
+                ArrowColor = #3C3C3C;
+                ArrowColorHover = black;
+                BackgroundColor = #F5F5F5;
+                BackgroundColorDisabled = #E6E6E6;
+                BorderColor = black;
+                Borders = (1, 1, 1, 1);
+                Padding = (0, 0, 0, 0);
+                TextColor = #3C3C3C;
+                TextColorDisabled = #7D7D7D;
+                TextureArrow = None;
+                TextureArrowDisabled = None;
+                TextureArrowHover = None;
+                TextureBackground = None;
+                TextureBackgroundDisabled = None;
+
+                ListBox {
+                    BackgroundColor = #F5F5F5;
+                    BackgroundColorHover = white;
+                    BorderColor = black;
+                    Borders = (1, 1, 1, 1);
+                    Padding = (0, 0, 0, 0);
+                    SelectedBackgroundColor = #006EFF;
+                    SelectedBackgroundColorHover = #1E96FF;
+                    SelectedTextColor = white;
+                    TextColor = #3C3C3C;
+                    TextColorHover = black;
+                    TextureBackground = None;
+
+                    Scrollbar {
+                        ArrowBackgroundColor = #F5F5F5;
+                        ArrowBackgroundColorHover = white;
+                        ArrowColor = #3C3C3C;
+                        ArrowColorHover = black;
+                        TextureArrowDown = None;
+                        TextureArrowDownHover = None;
+                        TextureArrowUp = None;
+                        TextureArrowUpHover = None;
+                        TextureThumb = None;
+                        TextureThumbHover = None;
+                        TextureTrack = None;
+                        TextureTrackHover = None;
+                        ThumbColor = #DCDCDC;
+                        ThumbColorHover = #E6E6E6;
+                        TrackColor = #F5F5F5;
+                    }
+                }
+            }
+        }
+
+        Label.CurveTypeText {
+            Position = (10, 51.0526);
+            Renderer = &2;
+            Size = (128, 26.7301);
+            Text = "Curve type";
+            TextSize = 18;
+        }
+
+        Button.EditionModeButton {
+            Position = (140, 90);
+            Renderer = &3;
+            Size = (99, 28.1186);
+            Text = "Adding poinsts";
+            TextSize = 13;
+        }
+
+        Label.EditionModeText {
+            Position = (10, 91.0526);
+            Renderer = &2;
+            Size = (128, 26.7301);
+            Text = "Edition mode";
+            TextSize = 18;
+        }
+
+        Label.InspectorText {
+            HorizontalAlignment = Center;
+            Position = (50, 8.96431);
+            Renderer = &2;
+            Size = (168, 32.7128);
+            Text = Inspector;
+            TextSize = 24;
+        }
     }
 }

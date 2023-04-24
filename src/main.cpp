@@ -5,12 +5,17 @@
 #include "curve.hpp"
 #include <string>
 
+enum EditionMode { None, Add, Move};
+
+static const sf::Color drawingBackgroundColor = sf::Color(200,200,200);
 Curve* activeCurve = nullptr;
+static EditionMode currentMode = EditionMode::None;
 
 static int curvesNum = 0;
 
 void addPoint(tgui::Vector2f pos)
 {
+    if(currentMode != EditionMode::Add) return;
     Node node(pos);
     if(activeCurve)
     {
@@ -24,6 +29,7 @@ void addCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   curvesNum++;
   listBox->addItem(s);
   listBox->setSelectedItemByIndex(-1);
+  currentMode = EditionMode::None;
   Curve c;
   curves.push_back(c);
   for(auto& curve : curves)
@@ -38,6 +44,7 @@ void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   curves.erase(curves.begin() + index);
   listBox->removeItemByIndex(index);
   listBox->setSelectedItemByIndex(-1);
+  currentMode = EditionMode::None;
 }
 
 
@@ -49,8 +56,20 @@ void selectCurve(std::vector<Curve>& curves, int index)
     curve.isSelected = false;
   activeCurve = &curves[index];
   activeCurve->isSelected = true;
+  currentMode = EditionMode::Add;
 }
 
+void switchMode()
+{
+  if(currentMode == EditionMode::Add)
+  {
+    currentMode = EditionMode::Move; 
+  }
+  else if(currentMode == EditionMode::Move)
+  {
+    currentMode = EditionMode::Add;
+  }
+}
 
 int main()
 {
@@ -64,18 +83,19 @@ int main()
     auto canvas = tgui::CanvasSFML::create();
     canvas->setPosition({"20%","0%"});
     canvas->setSize({"100%", "100%"});
-    canvas->onMousePress(&addPoint);
     gui.add(canvas);
 
     auto curvesListBox = gui.get<tgui::ListBox>("CurvesListBox");
     auto addButton = gui.get<tgui::Button>("AddButton");
     auto deleteButton = gui.get<tgui::Button>("DeleteButton");
+    auto inspectorGroup = gui.get<tgui::Group>("InspectorGroup");
+    auto modeSwitchButton = gui.get<tgui::Button>("EditionModeButton");
+
     addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
     deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
-
+    modeSwitchButton->onPress(&switchMode);
     curvesListBox->onItemSelect(&selectCurve, std::ref(curves));
-    
-
+    canvas->onMousePress(&addPoint);
     
     // Main loop
     while (window.isOpen())
@@ -88,13 +108,17 @@ int main()
             if (event.type == sf::Event::Closed)
                 window.close();
         }
-        if(curvesListBox->getSelectedItemIndex() == -1)
-          deleteButton->setVisible(false);
-        else
-          deleteButton->setVisible(true);
-           
+
+        // Set conditionally visible elements
+        deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
+        inspectorGroup->setVisible(currentMode != EditionMode::None);
+        if(currentMode == EditionMode::Add)
+          modeSwitchButton->setText("Adding points");
+        if(currentMode == EditionMode::Move)
+          modeSwitchButton->setText("Moving points");
+          
         window.clear();
-        canvas->clear(sf::Color::Blue);
+        canvas->clear(drawingBackgroundColor);
         for(auto const& curve : curves) 
             canvas->draw(curve);
         canvas->display();
