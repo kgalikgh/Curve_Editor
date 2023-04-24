@@ -1,0 +1,146 @@
+Renderer.1 {
+    BackgroundColor = white;
+    BorderColor = black;
+    TextureBackground = None;
+}
+
+Renderer.2 {
+    BackgroundColor = transparent;
+    BorderColor = #3C3C3C;
+    Borders = (0, 0, 0, 0);
+    TextColor = #3C3C3C;
+    TextureBackground = None;
+
+    Scrollbar {
+        ArrowBackgroundColor = #F5F5F5;
+        ArrowBackgroundColorHover = white;
+        ArrowColor = #3C3C3C;
+        ArrowColorHover = black;
+        TextureArrowDown = None;
+        TextureArrowDownHover = None;
+        TextureArrowUp = None;
+        TextureArrowUpHover = None;
+        TextureThumb = None;
+        TextureThumbHover = None;
+        TextureTrack = None;
+        TextureTrackHover = None;
+        ThumbColor = #DCDCDC;
+        ThumbColorHover = #E6E6E6;
+        TrackColor = #F5F5F5;
+    }
+}
+
+Renderer.3 {
+    BackgroundColor = #F5F5F5;
+    BackgroundColorDisabled = #E6E6E6;
+    BackgroundColorDown = #EBEBEB;
+    BackgroundColorHover = white;
+    BorderColor = #3C3C3C;
+    BorderColorDisabled = #7D7D7D;
+    BorderColorDown = black;
+    BorderColorFocused = #1E1EB4;
+    BorderColorHover = black;
+    Borders = (1, 1, 1, 1);
+    TextColor = #3C3C3C;
+    TextColorDisabled = #7D7D7D;
+    TextColorDown = black;
+    TextColorHover = black;
+    Texture = None;
+    TextureDisabled = None;
+    TextureDown = None;
+    TextureDownFocused = None;
+    TextureDownHover = None;
+    TextureFocused = None;
+    TextureHover = None;
+}
+
+Panel.Panel1 {
+    Renderer = &1;
+    Size = (100%, 100%);
+}
+
+Panel.Sidebar {
+    Renderer = &1;
+    Size = (20%, 100%);
+
+    Label.CurvesText {
+        HorizontalAlignment = Center;
+        Renderer = &2;
+        Size = (100%, 49.2255);
+        Text = Curves;
+        TextSize = 30;
+    }
+
+    ListBox.CurvesListBox {
+        ItemHeight = 40;
+        MaximumItems = 0;
+        Position = (0, 60);
+        Size = (100%, 245);
+        TextAlignment = Center;
+        TextSize = 28;
+
+        Renderer {
+            BackgroundColor = #F5F5F5;
+            BackgroundColorHover = white;
+            BorderColor = black;
+            Borders = (1, 1, 1, 1);
+            Padding = (0, 0, 0, 0);
+            SelectedBackgroundColor = #006EFF;
+            SelectedBackgroundColorHover = #1E96FF;
+            SelectedTextColor = white;
+            TextColor = #3C3C3C;
+            TextColorHover = black;
+            TextureBackground = None;
+
+            Scrollbar {
+                ArrowBackgroundColor = #F5F5F5;
+                ArrowBackgroundColorHover = white;
+                ArrowColor = #3C3C3C;
+                ArrowColorHover = black;
+                TextureArrowDown = None;
+                TextureArrowDownHover = None;
+                TextureArrowUp = None;
+                TextureArrowUpHover = None;
+                TextureThumb = None;
+                TextureThumbHover = None;
+                TextureTrack = None;
+                TextureTrackHover = None;
+                ThumbColor = #DCDCDC;
+                ThumbColorHover = #E6E6E6;
+                TrackColor = #F5F5F5;
+            }
+        }
+    }
+
+    Button.AddButton {
+        Position = (0, 320);
+        Renderer = &3;
+        Size = (89, 31.678);
+        Text = Add;
+        TextSize = 13;
+    }
+
+    Button.EditButton {
+        Position = (90, 320);
+        Renderer = &3;
+        Size = (89, 31.678);
+        Text = Edit;
+        TextSize = 13;
+    }
+
+    Button.DeleteButton {
+        Position = (180, 320);
+        Renderer = &3;
+        Size = (89, 31.678);
+        Text = Delete;
+        TextSize = 13;
+    }
+
+    Label.ModeText {
+        HorizontalAlignment = Center;
+        Position = (0, 720);
+        Renderer = &2;
+        Size = (100%, 49.2255);
+        TextSize = 30;
+    }
+}
