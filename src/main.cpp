@@ -126,6 +126,17 @@ void switchMode()
   }
 }
 
+void pickCurveType(int index)
+{
+  switch(index)
+  {
+    case 0:
+    break;
+    case 1:
+    break;
+  }
+}
+
 int main()
 {
     std::vector<Curve> curves;    
@@ -145,11 +156,17 @@ int main()
     auto deleteButton = gui.get<tgui::Button>("DeleteButton");
     auto inspectorGroup = gui.get<tgui::Group>("InspectorGroup");
     auto modeSwitchButton = gui.get<tgui::Button>("EditionModeButton");
+    auto curveTypeComboBox= gui.get<tgui::ComboBox>("CurveTypeCombo");
 
     addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
     deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
     modeSwitchButton->onPress(&switchMode);
     curvesListBox->onItemSelect(&selectCurve, std::ref(curves));
+    curveTypeComboBox->onItemSelect(&pickCurveType);
+    curveTypeComboBox->addItem("Polyline");
+    curveTypeComboBox->addItem("Interpolated");
+ 
+    
     canvas->onMousePress(&addPoint);
     canvas->onMousePress(&selectPoint);
     canvas->onMouseRelease(&deselectAllPoints);

@@ -15,4 +15,3 @@ class Curve : public sf::Drawable
   sf::VertexArray points;
   void updatePoints();
 };
-
