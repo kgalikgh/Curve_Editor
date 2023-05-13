@@ -2,27 +2,26 @@
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
-#include "curve.hpp"
-#include "point.hpp"
 #include <string>
 
-const sf::Color nodeColor = sf::Color(102,102,102);
-const sf::Color vertexColor = sf::Color(30,30,30);
-const sf::Color pickedNodeColor = sf::Color(200, 100, 100);
-enum EditionMode { None, Add, Move};
-static const sf::Vector2f canvasOffset(0.2 * 1366, 0);
+#include "constants.hpp"
+#include "curve.hpp"
+#include "point.hpp"
 
-static const sf::Color drawingBackgroundColor = sf::Color(200,200,200);
+//TODO
+//Create a class for Editor with all crucial elements
+enum EditionMode { None, Add, Move};
+
 Curve* activeCurve = nullptr;
 Node* activePoint = nullptr;
+
 sf::Vector2f initialMousePos;
 static EditionMode currentMode = EditionMode::None;
-
 static int curvesNum = 0;
 
-inline sf::Vector2f sfmlMousePosToTgui(sf::Vector2f originalPos)
+inline sf::Vector2f sfmlMousePosToTgui(sf::Vector2f originalPos, float windowWidth)
 {
-  return originalPos - canvasOffset;
+  return originalPos - sf::Vector2f(windowWidth * 0.2, 0);
 }
 
 // Callbacks
@@ -40,15 +39,7 @@ void removePoint(tgui::Vector2f pos)
 {
   if(currentMode != EditionMode::Move) return;
   if(activePoint != nullptr) return;
-  for(int i = 0; i < activeCurve->nodesList.size(); ++i)
-  {
-    auto bounds = activeCurve->nodesList[i].pointSprite.getGlobalBounds();
-    if(bounds.contains(pos))
-    {
-      activeCurve->removeNode(i);
-      break;
-    }
-  }
+  activeCurve->removeClickedNode(pos); 
 }
 
 void selectPoint(tgui::Vector2f pos)
@@ -56,18 +47,10 @@ void selectPoint(tgui::Vector2f pos)
   if(currentMode != EditionMode::Move) return;
   if(activePoint != nullptr) return;
   initialMousePos = pos;
-  for(auto& point : activeCurve->nodesList)
-  {
-    auto bounds = point.pointSprite.getGlobalBounds();
-    if(bounds.contains(pos))
-    {
-      activePoint = &point;
-      break;
-    }
-  }
+  activePoint = activeCurve->findClickedNode(pos);
   if(activePoint)
   {
-    activePoint->pointSprite.setFillColor(pickedNodeColor);
+    activePoint->select();
   }
 }
 
@@ -75,7 +58,7 @@ void deselectAllPoints()
 {
   if(currentMode != EditionMode::Move) return;
   if(activePoint == nullptr) return;
-  activePoint->pointSprite.setFillColor(nodeColor);
+  activePoint->deselect();
   activePoint = nullptr;
 }
 
@@ -89,14 +72,13 @@ void addCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   Curve c;
   curves.push_back(c);
   for(auto& curve : curves)
-    curve.isSelected = false;
+    curve.deselect();
 } 
 
 void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
 {
   activeCurve = nullptr;
   int index = listBox->getSelectedItemIndex();
-  std::cout<<index<<std::endl;
   curves.erase(curves.begin() + index);
   listBox->removeItemByIndex(index);
   listBox->setSelectedItemByIndex(-1);
@@ -107,10 +89,12 @@ void selectCurve(std::vector<Curve>& curves, int index)
 {
   if(curves.empty()) return;
   if(index > curves.size()) return; 
-  for(auto& curve : curves)
-    curve.isSelected = false;
+  if(activeCurve)
+  {
+    activeCurve->deselect();
+  }
   activeCurve = &curves[index];
-  activeCurve->isSelected = true;
+  activeCurve->select();
   currentMode = EditionMode::Add;
 }
 
@@ -131,8 +115,10 @@ void pickCurveType(int index)
   switch(index)
   {
     case 0:
+    activeCurve->changeCurveType(CurveType::Polyline);
     break;
     case 1:
+    activeCurve->changeCurveType(CurveType::LagrangeInterpolation);
     break;
   }
 }
@@ -165,7 +151,6 @@ int main()
     curveTypeComboBox->onItemSelect(&pickCurveType);
     curveTypeComboBox->addItem("Polyline");
     curveTypeComboBox->addItem("Interpolated");
- 
     
     canvas->onMousePress(&addPoint);
     canvas->onMousePress(&selectPoint);
@@ -181,14 +166,16 @@ int main()
             gui.handleEvent(event);
     
             if (event.type == sf::Event::Closed)
-                window.close();
-            if ((event.type == sf::Event::MouseMoved) && (activePoint != nullptr) && (activeCurve != nullptr) && (currentMode == EditionMode::Move))
             {
-              std::cout<<"ActualPos: "<<event.mouseMove.x<<", "<<event.mouseMove.y<<std::endl;
-              sf::Vector2f offset = sfmlMousePosToTgui(sf::Vector2f(event.mouseMove.x, event.mouseMove.y)) - initialMousePos;
-              activePoint->pointSprite.move(offset);
-              activeCurve->updatePoints();
-              initialMousePos = sfmlMousePosToTgui(sf::Vector2f(event.mouseMove.x, event.mouseMove.y));
+              window.close();
+            }
+            if ((event.type == sf::Event::MouseMoved) && 
+                (activePoint != nullptr) && 
+                (activeCurve != nullptr) && 
+                (currentMode == EditionMode::Move))
+            {
+              activePoint->setPosition(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y );
+              activeCurve->updateCurve();
             }
         }
 
@@ -203,7 +190,9 @@ int main()
         window.clear();
         canvas->clear(drawingBackgroundColor);
         for(auto const& curve : curves) 
-            canvas->draw(curve);
+        {
+          canvas->draw(curve);
+        }
         canvas->display();
         gui.draw();
     

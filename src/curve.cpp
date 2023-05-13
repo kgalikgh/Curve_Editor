@@ -1,85 +1,116 @@
 #include "curve.hpp"
-#include <cmath>
-#include <iterator>
-#include <numbers>
+#include <TGUI/TGUI.hpp>
+#include <TGUI/Backend/SFML-Graphics.hpp>
 #include <iostream>
 
-
-float getChebyshevNode(float a, float b, int i, int n)
+sf::VertexArray makePolyline(const std::vector<Node>& nodesList)
 {
-  return 0.5 * (a + b) + 0.5 * (b - a) * cos((2.0*i - 1)/n*(3.14159/2));
+  auto points = sf::VertexArray(sf::LineStrip);
+  for(auto& node : nodesList)
+    points.append(node.getVertex()); 
+  return points;
 }
 
-Curve::Curve() : isSelected(false), points(sf::LineStrip) {}
+sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList)
+{
+  auto points = sf::VertexArray(sf::LineStrip);
+  for(auto& node : nodesList)
+  {
+    auto v = node.getVertex();
+    v.color = sf::Color::Red;
+    points.append(v); 
+  }
+  return points;
+}
+
+Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline) {}
 
 void Curve::addNode(Node node)
 {
   nodesList.push_back(node);
-  updatePoints();
+  updateCurve();
 }
 
 void Curve::removeNode(int index)
 {
   nodesList.erase(nodesList.begin() + index);
-  updatePoints();
+  updateCurve();
+}
+
+void Curve::select()
+{
+  selected = true;
+}
+
+void Curve::deselect()
+{
+  selected = false;
+}
+
+bool Curve::isSelected()
+{
+  return selected;
+}
+
+void Curve::updateCurve()
+{
+  points = makeCurve(nodesList);
+}
+
+Node* Curve::findClickedNode(tgui::Vector2f pos)
+{
+  Node* ret = nullptr;
+  for(auto& node : nodesList)
+  {
+    auto bounds = node.getBounds();
+    if(bounds.contains(pos))
+    {
+      ret = &node;
+      break;
+    }
+  }
+  return ret;
+}
+
+void Curve::removeClickedNode(tgui::Vector2f pos)
+{
+  for(int i = 0; i < nodesList.size(); ++i)
+  {
+    auto point = nodesList[i];
+    auto bounds = point.getBounds();
+    if(bounds.contains(pos))
+    {
+      this->removeNode(i);
+      break;
+    }
+  }
+}
+
+void Curve::changeCurveType(CurveType newType)
+{
+  type = newType;
+  switch(type)
+  {
+    case CurveType::Polyline:
+    makeCurve = makePolyline; 
+    break; 
+    case CurveType::LagrangeInterpolation:
+    makeCurve = makeLagrangeInterpolation; 
+    break; 
+  } 
+  this->updateCurve();
 }
 
 void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
   if(nodesList.empty()) return;
-  if(isSelected)
+  if(selected)
+  {
     for(auto const& node : nodesList)
+    {
       target.draw(node);
-  target.draw(points);
-}
-
-void Curve::updatePoints()
-{
-  std::cout<<"Points drawn" <<std::endl;
-  int n = nodesList.size();
-  float xk[100];
-
-  // Finding n Chebyshev nodes
-  for(int i = 1; i <= n; i++)
-  {
-    xk[i] = getChebyshevNode(0, 20, i, n); 
-    std::cout<<"Chebyshev node:"<<xk[i]<<std::endl;
-  }
-  
-  // Calculating w_k
-  float w[100][100];
-  
-  w[0][0] = 1.0;
-  for(int i = 1; i <= n; i++)
-  {
-    w[i][i] = 1;
-    for(int k = 0; k < n; k++)
-    {
-      w[k][i] = w[k][i-1]/(xk[k] - xk[i]); 
-      w[i][k+1] = w[i][k] - w[k][i];
     }
-  } 
-  
-  sf::Vector2f positions[100];
-  for(int i = 0; i < n; i++)
-  {
-    positions[i] = nodesList[i].pointSprite.getPosition();   
   }
-
-  points = sf::VertexArray(sf::LineStrip);
-  for(float t = 0; t <= 20; t+= 0.0001)
-  {
-    float x_numerator = 0.0;
-    float y_numerator = 0.0;
-    float denominator = 0.0;
-    for(int i = 0; i <= n; i++)
-    {
-      float multiplier = (w[i][n]/(t - xk[i]));  
-      x_numerator += positions[i].x * multiplier;
-      y_numerator += positions[i].y * multiplier;
-      denominator += multiplier;
-    }   
-    points.append(sf::Vertex(sf::Vector2f(x_numerator/denominator, y_numerator/denominator)));
-  }
+  target.draw(points);
 }
 

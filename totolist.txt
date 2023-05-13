@@ -1,0 +1,4 @@
+TODOs:
+
+1. Fix the segfault with move()
+2. Create appropriate abstractions for curve types
