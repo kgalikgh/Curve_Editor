@@ -3,50 +3,56 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
+#include <map>
 
 #include "constants.hpp"
 #include "curve.hpp"
 #include "point.hpp"
 
-//TODO
-//Create a class for Editor with all crucial elements
-enum EditionMode { None, Add, Move};
+enum EditorMode { None, AddRmNodes, MoveNodes, MoveCurve, RotateCurve};
+static std::map<EditorMode, std::string> modeStr{
+  {EditorMode::None, "None"},
+  {EditorMode::AddRmNodes, "Add/Remove nodes"},
+  {EditorMode::MoveNodes, "Move nodes"},
+  {EditorMode::MoveCurve, "Move curve"},
+  {EditorMode::RotateCurve, "Rotate curve"}
+};
+
 
 Curve* activeCurve = nullptr;
 Node* activePoint = nullptr;
 
 sf::Vector2f initialMousePos;
-static EditionMode currentMode = EditionMode::None;
+static EditorMode currentMode = EditorMode::None;
 static int curvesNum = 0;
 
-inline sf::Vector2f sfmlMousePosToTgui(sf::Vector2f originalPos, float windowWidth)
+void moveNode(float x, float y)
 {
-  return originalPos - sf::Vector2f(windowWidth * 0.2, 0);
-}
+  if((activePoint == nullptr) || (activeCurve == nullptr)) return;
+  activePoint->setPosition(x, y);
+  activeCurve->updateCurve();
+} 
 
 // Callbacks
 void addPoint(tgui::Vector2f pos)
 {
-    if(currentMode != EditionMode::Add) return;
-    Node node(pos);
-    if(activeCurve)
-    {
-        activeCurve->addNode(node);
-    }
+  if(currentMode != EditorMode::AddRmNodes) return;
+  if(activeCurve == nullptr) return;
+  Node node(pos);
+  activeCurve->addNode(node);
 }
 
 void removePoint(tgui::Vector2f pos)
 {
-  if(currentMode != EditionMode::Move) return;
-  if(activePoint != nullptr) return;
+  if(currentMode != EditorMode::AddRmNodes) return;
+  if(activeCurve == nullptr) return;
   activeCurve->removeClickedNode(pos); 
 }
 
 void selectPoint(tgui::Vector2f pos)
 {
-  if(currentMode != EditionMode::Move) return;
+  if(currentMode != EditorMode::MoveNodes) return;
   if(activePoint != nullptr) return;
-  initialMousePos = pos;
   activePoint = activeCurve->findClickedNode(pos);
   if(activePoint)
   {
@@ -56,7 +62,7 @@ void selectPoint(tgui::Vector2f pos)
 
 void deselectAllPoints()
 {
-  if(currentMode != EditionMode::Move) return;
+  if(currentMode != EditorMode::MoveNodes) return;
   if(activePoint == nullptr) return;
   activePoint->deselect();
   activePoint = nullptr;
@@ -68,7 +74,7 @@ void addCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   curvesNum++;
   listBox->addItem(s);
   listBox->setSelectedItemByIndex(-1);
-  currentMode = EditionMode::None;
+  currentMode = EditorMode::None;
   Curve c;
   curves.push_back(c);
   for(auto& curve : curves)
@@ -82,10 +88,10 @@ void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   curves.erase(curves.begin() + index);
   listBox->removeItemByIndex(index);
   listBox->setSelectedItemByIndex(-1);
-  currentMode = EditionMode::None;
-}
+  currentMode = EditorMode::None;
+} 
 
-void selectCurve(std::vector<Curve>& curves, int index)
+void selectCurve(std::vector<Curve>& curves, tgui::ComboBox::Ptr curveType, int index)
 {
   if(curves.empty()) return;
   if(index > curves.size()) return; 
@@ -95,108 +101,101 @@ void selectCurve(std::vector<Curve>& curves, int index)
   }
   activeCurve = &curves[index];
   activeCurve->select();
-  currentMode = EditionMode::Add;
+  curveType->setSelectedItemByIndex((int)activeCurve->getCurveType());
 }
 
-void switchMode()
+void switchMode(EditorMode mode, tgui::Label::Ptr modeText)
 {
-  if(currentMode == EditionMode::Add)
-  {
-    currentMode = EditionMode::Move; 
-  }
-  else if(currentMode == EditionMode::Move)
-  {
-    currentMode = EditionMode::Add;
-  }
+  currentMode = mode;
+  std::string str = modeStr[mode];
+  modeText->setText(str);
 }
 
 void pickCurveType(int index)
 {
-  switch(index)
-  {
-    case 0:
-    activeCurve->changeCurveType(CurveType::Polyline);
-    break;
-    case 1:
-    activeCurve->changeCurveType(CurveType::LagrangeInterpolation);
-    break;
-  }
+  activeCurve->changeCurveType((CurveType)index);
 }
 
 int main()
 {
-    std::vector<Curve> curves;    
+  std::vector<Curve> curves; 
 
-    // Setup window
-    sf::RenderWindow window{{1366, 768}, "TGUI example - SFML_GRAPHICS backend"};
-    tgui::Gui gui{window};
-    gui.loadWidgetsFromFile("gui/editor_gui.txt"); 
+  // Setup window
+  sf::RenderWindow window{{1366, 768}, "TGUI example - SFML_GRAPHICS backend"};
+  tgui::Gui gui{window};
+  gui.loadWidgetsFromFile("gui/editor_gui.txt"); 
 
-    auto canvas = tgui::CanvasSFML::create();
-    canvas->setPosition({"20%","0%"});
-    canvas->setSize({"100%", "100%"});
-    gui.add(canvas);
+  auto canvas = tgui::CanvasSFML::create();
+  canvas->setPosition({"20%","0%"});
+  canvas->setSize({"100%", "100%"});
+  gui.add(canvas);
 
-    auto curvesListBox = gui.get<tgui::ListBox>("CurvesListBox");
-    auto addButton = gui.get<tgui::Button>("AddButton");
-    auto deleteButton = gui.get<tgui::Button>("DeleteButton");
-    auto inspectorGroup = gui.get<tgui::Group>("InspectorGroup");
-    auto modeSwitchButton = gui.get<tgui::Button>("EditionModeButton");
-    auto curveTypeComboBox= gui.get<tgui::ComboBox>("CurveTypeCombo");
+  auto curvesListBox = gui.get<tgui::ListBox>("CurvesListBox");
+  auto addButton = gui.get<tgui::Button>("AddCurveBtn");
+  auto deleteButton = gui.get<tgui::Button>("DeleteCurveBtn");
+  auto buttonsGroup = gui.get<tgui::Group>("ButtonsGroup");
+  auto addRemoveNodesButton = gui.get<tgui::Button>("AddRmNodesBtn");
+  auto moveNodesButton = gui.get<tgui::Button>("MoveNodesBtn");
+  auto moveCurveButton = gui.get<tgui::Button>("MoveCurveBtn");
+  auto rotateCurveButton = gui.get<tgui::Button>("RotateCurveBtn");
+  auto modeText = gui.get<tgui::Label>("ModeText");
+  auto curveTypesComboBox = gui.get<tgui::ComboBox>("CurvesTypeComboBox");
 
-    addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
-    deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
-    modeSwitchButton->onPress(&switchMode);
-    curvesListBox->onItemSelect(&selectCurve, std::ref(curves));
-    curveTypeComboBox->onItemSelect(&pickCurveType);
-    curveTypeComboBox->addItem("Polyline");
-    curveTypeComboBox->addItem("Interpolated");
-    
-    canvas->onMousePress(&addPoint);
-    canvas->onMousePress(&selectPoint);
-    canvas->onMouseRelease(&deselectAllPoints);
-    canvas->onRightMousePress(&removePoint);
-    
-    // Main loop
-    while (window.isOpen())
+  addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
+  deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
+  addRemoveNodesButton->onPress(&switchMode, EditorMode::AddRmNodes, modeText);
+  moveNodesButton->onPress(&switchMode, EditorMode::MoveNodes, modeText);
+  moveCurveButton->onPress(&switchMode, EditorMode::MoveCurve, modeText);
+  rotateCurveButton->onPress(&switchMode, EditorMode::RotateCurve, modeText);
+  curveTypesComboBox->onItemSelect(&pickCurveType);
+  curveTypesComboBox->addItem("Polyline");
+  curveTypesComboBox->addItem("Interpolated");
+
+  curvesListBox->onItemSelect(&selectCurve, std::ref(curves), curveTypesComboBox);
+  
+  canvas->onMousePress(&addPoint);
+  canvas->onMousePress(&selectPoint);
+  canvas->onMouseRelease(&deselectAllPoints);
+  canvas->onRightMousePress(&removePoint);
+ 
+  // Main loop
+  while (window.isOpen())
+  {
+    sf::Event event;
+    while (window.pollEvent(event))
     {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            gui.handleEvent(event);
-    
-            if (event.type == sf::Event::Closed)
-            {
-              window.close();
-            }
-            if ((event.type == sf::Event::MouseMoved) && 
-                (activePoint != nullptr) && 
-                (activeCurve != nullptr) && 
-                (currentMode == EditionMode::Move))
-            {
-              activePoint->setPosition(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y );
-              activeCurve->updateCurve();
-            }
-        }
+      gui.handleEvent(event);
+  
+      if (event.type == sf::Event::Closed)
+      {
+        window.close();
+      }
 
-        // Set conditionally visible elements
-        deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
-        inspectorGroup->setVisible(currentMode != EditionMode::None);
-        if(currentMode == EditionMode::Add)
-          modeSwitchButton->setText("Adding points");
-        if(currentMode == EditionMode::Move)
-          modeSwitchButton->setText("Editing points");
-          
-        window.clear();
-        canvas->clear(drawingBackgroundColor);
-        for(auto const& curve : curves) 
+      //Handle custom canvas events
+      switch(currentMode)
+      {
+        case EditorMode::MoveNodes:
+        if (event.type == sf::Event::MouseMoved)
         {
-          canvas->draw(curve);
+          moveNode(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y);
         }
-        canvas->display();
-        gui.draw();
-    
-        window.display();
+        break;
+      }
     }
+
+    // Set conditionally visible elements
+    deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
+
+    window.clear();
+    canvas->clear(drawingBackgroundColor);
+    for(auto const& curve : curves) 
+    {
+      canvas->draw(curve);
+    }
+    canvas->display();
+    gui.draw();
+  
+    window.display();
+  }
 }
 

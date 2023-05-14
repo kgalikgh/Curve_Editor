@@ -1,36 +1,4 @@
 Renderer.1 {
-    BackgroundColor = white;
-    BorderColor = black;
-    TextureBackground = None;
-}
-
-Renderer.2 {
-    BackgroundColor = transparent;
-    BorderColor = #3C3C3C;
-    Borders = (0, 0, 0, 0);
-    TextColor = #3C3C3C;
-    TextureBackground = None;
-
-    Scrollbar {
-        ArrowBackgroundColor = #F5F5F5;
-        ArrowBackgroundColorHover = white;
-        ArrowColor = #3C3C3C;
-        ArrowColorHover = black;
-        TextureArrowDown = None;
-        TextureArrowDownHover = None;
-        TextureArrowUp = None;
-        TextureArrowUpHover = None;
-        TextureThumb = None;
-        TextureThumbHover = None;
-        TextureTrack = None;
-        TextureTrackHover = None;
-        ThumbColor = #DCDCDC;
-        ThumbColorHover = #E6E6E6;
-        TrackColor = #F5F5F5;
-    }
-}
-
-Renderer.3 {
     BackgroundColor = #F5F5F5;
     BackgroundColorDisabled = #E6E6E6;
     BackgroundColorDown = #EBEBEB;
@@ -54,28 +22,58 @@ Renderer.3 {
     TextureHover = None;
 }
 
-Panel.Panel1 {
-    Renderer = &1;
-    Size = (100%, 100%);
+Renderer.2 {
 }
 
 Panel.Sidebar {
-    Renderer = &1;
     Size = (20%, 100%);
 
-    Label.CurvesText {
+    Renderer {
+        BackgroundColor = white;
+        BorderColor = black;
+        TextureBackground = None;
+    }
+
+    Label.ModeText {
         HorizontalAlignment = Center;
-        Renderer = &2;
-        Size = (100%, 49.2255);
-        Text = Curves;
-        TextSize = 30;
+        IgnoreMouseEvents = true;
+        Position = (0, 96%);
+        Size = (100%, 21.4737);
+        TextSize = 10;
+        VerticalAlignment = Center;
+
+        Renderer {
+            BackgroundColor = transparent;
+            BorderColor = #3C3C3C;
+            Borders = (0, 0, 0, 0);
+            TextColor = #3C3C3C;
+            TextureBackground = None;
+
+            Scrollbar {
+                ArrowBackgroundColor = #F5F5F5;
+                ArrowBackgroundColorHover = white;
+                ArrowColor = #3C3C3C;
+                ArrowColorHover = black;
+                TextureArrowDown = None;
+                TextureArrowDownHover = None;
+                TextureArrowUp = None;
+                TextureArrowUpHover = None;
+                TextureThumb = None;
+                TextureThumbHover = None;
+                TextureTrack = None;
+                TextureTrackHover = None;
+                ThumbColor = #DCDCDC;
+                ThumbColorHover = #E6E6E6;
+                TrackColor = #F5F5F5;
+            }
+        }
     }
 
     ListBox.CurvesListBox {
         ItemHeight = 40;
         MaximumItems = 0;
-        Position = (0, 60);
-        Size = (100%, 245);
+        Position = (2, 40);
+        Size = (100% - 4, 155);
         TextAlignment = Center;
         TextSize = 28;
 
@@ -112,35 +110,71 @@ Panel.Sidebar {
         }
     }
 
-    Button.AddButton {
-        Position = (0, 320);
-        Renderer = &3;
-        Size = (129, 31.678);
-        Text = Add;
+    Button.AddCurveBtn {
+        Position = (2, 202);
+        Renderer = &1;
+        Size = (50% - 4, 26);
+        Text = "+";
         TextSize = 13;
     }
 
-    Button.DeleteButton {
-        Position = (130, 320);
-        Renderer = &3;
-        Size = (139, 31.678);
-        Text = Delete;
+    Button.DeleteCurveBtn {
+        Position = (50% + 2, 202);
+        Renderer = &1;
+        Size = (50% - 4, 26);
+        Text = "-";
         TextSize = 13;
     }
 
-    Group.InspectorGroup {
-        Position = (10, 420);
-        Size = (100%, 120);
+    Group.ButtonsGroup {
+        Position = (0, 240);
+        Renderer = &2;
+        Size = (100%, 60);
 
-        Renderer {
+        Button.AddRmNodesBtn {
+            Position = (2, 0);
+            Renderer = &1;
+            Size = (50% - 4, 26);
+            Text = "add/rm nodes";
+            TextSize = 9;
         }
 
-        ComboBox.CurveTypeCombo {
+        Button.MoveNodesBtn {
+            Position = (50% + 2, 0);
+            Renderer = &1;
+            Size = (50% - 4, 26);
+            Text = "move nodes";
+            TextSize = 9;
+        }
+
+        Button.MoveCurveBtn {
+            Position = (2, 30);
+            Renderer = &1;
+            Size = (50% - 4, 26);
+            Text = "move curve";
+            TextSize = 9;
+        }
+
+        Button.RotateCurveBtn {
+            Position = (50% + 2, 30);
+            Renderer = &1;
+            Size = (50% - 4, 26);
+            Text = "rotate curve";
+            TextSize = 9;
+        }
+    }
+
+    Group.CurveOptions {
+        Position = (0, 350);
+        Renderer = &2;
+        Size = (100%, 200);
+
+        ComboBox.CurvesTypeComboBox {
             ChangeItemOnScroll = false;
             ItemsToDisplay = 0;
             MaximumItems = 0;
-            Position = (130, 50);
-            Size = (120, 21);
+            Position = (2, 0);
+            Size = (100% - 4, 21);
             TextSize = 13;
 
             Renderer {
@@ -193,39 +227,6 @@ Panel.Sidebar {
                     }
                 }
             }
-        }
-
-        Label.CurveTypeText {
-            Position = (10, 51.0526);
-            Renderer = &2;
-            Size = (128, 26.7301);
-            Text = "Curve type";
-            TextSize = 18;
-        }
-
-        Button.EditionModeButton {
-            Position = (140, 90);
-            Renderer = &3;
-            Size = (99, 28.1186);
-            Text = "Adding poinsts";
-            TextSize = 13;
-        }
-
-        Label.EditionModeText {
-            Position = (10, 91.0526);
-            Renderer = &2;
-            Size = (128, 26.7301);
-            Text = "Edition mode";
-            TextSize = 18;
-        }
-
-        Label.InspectorText {
-            HorizontalAlignment = Center;
-            Position = (50, 8.96431);
-            Renderer = &2;
-            Size = (168, 32.7128);
-            Text = Inspector;
-            TextSize = 24;
         }
     }
 }

@@ -23,6 +23,7 @@ class Curve : public sf::Drawable
   Node* findClickedNode(tgui::Vector2f);
   void removeClickedNode(tgui::Vector2f);
   void changeCurveType(CurveType);
+  CurveType getCurveType();
 
   //void moveAllPointsByOffset(sf::vector2f);
   void updateCurve();

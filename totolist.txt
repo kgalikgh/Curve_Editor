@@ -1,4 +1,7 @@
 TODOs:
-
-1. Fix the segfault with move()
-2. Create appropriate abstractions for curve types
+1. Add curve types: Newton interpolation, NIFS3, OIFS3, Bezier
+2. Abstract all editor wise objects to separate class
+3. Redesign UI
+4. Add saving/loading the project
+5. Add moving/rotating/scaling whole curves
+6. 

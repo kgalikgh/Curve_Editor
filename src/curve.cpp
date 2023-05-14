@@ -101,6 +101,11 @@ void Curve::changeCurveType(CurveType newType)
   this->updateCurve();
 }
 
+CurveType Curve::getCurveType()
+{
+  return type;
+}
+
 void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
   if(nodesList.empty()) return;
