@@ -1,4 +1,30 @@
 Renderer.1 {
+    BackgroundColor = transparent;
+    BorderColor = #3C3C3C;
+    Borders = (0, 0, 0, 0);
+    TextColor = #3C3C3C;
+    TextureBackground = None;
+
+    Scrollbar {
+        ArrowBackgroundColor = #F5F5F5;
+        ArrowBackgroundColorHover = white;
+        ArrowColor = #3C3C3C;
+        ArrowColorHover = black;
+        TextureArrowDown = None;
+        TextureArrowDownHover = None;
+        TextureArrowUp = None;
+        TextureArrowUpHover = None;
+        TextureThumb = None;
+        TextureThumbHover = None;
+        TextureTrack = None;
+        TextureTrackHover = None;
+        ThumbColor = #DCDCDC;
+        ThumbColorHover = #E6E6E6;
+        TrackColor = #F5F5F5;
+    }
+}
+
+Renderer.2 {
     BackgroundColor = #F5F5F5;
     BackgroundColorDisabled = #E6E6E6;
     BackgroundColorDown = #EBEBEB;
@@ -22,7 +48,7 @@ Renderer.1 {
     TextureHover = None;
 }
 
-Renderer.2 {
+Renderer.3 {
 }
 
 Panel.Sidebar {
@@ -38,35 +64,10 @@ Panel.Sidebar {
         HorizontalAlignment = Center;
         IgnoreMouseEvents = true;
         Position = (0, 96%);
+        Renderer = &1;
         Size = (100%, 21.4737);
         TextSize = 10;
         VerticalAlignment = Center;
-
-        Renderer {
-            BackgroundColor = transparent;
-            BorderColor = #3C3C3C;
-            Borders = (0, 0, 0, 0);
-            TextColor = #3C3C3C;
-            TextureBackground = None;
-
-            Scrollbar {
-                ArrowBackgroundColor = #F5F5F5;
-                ArrowBackgroundColorHover = white;
-                ArrowColor = #3C3C3C;
-                ArrowColorHover = black;
-                TextureArrowDown = None;
-                TextureArrowDownHover = None;
-                TextureArrowUp = None;
-                TextureArrowUpHover = None;
-                TextureThumb = None;
-                TextureThumbHover = None;
-                TextureTrack = None;
-                TextureTrackHover = None;
-                ThumbColor = #DCDCDC;
-                ThumbColorHover = #E6E6E6;
-                TrackColor = #F5F5F5;
-            }
-        }
     }
 
     ListBox.CurvesListBox {
@@ -112,7 +113,7 @@ Panel.Sidebar {
 
     Button.AddCurveBtn {
         Position = (2, 202);
-        Renderer = &1;
+        Renderer = &2;
         Size = (50% - 4, 26);
         Text = "+";
         TextSize = 13;
@@ -120,7 +121,7 @@ Panel.Sidebar {
 
     Button.DeleteCurveBtn {
         Position = (50% + 2, 202);
-        Renderer = &1;
+        Renderer = &2;
         Size = (50% - 4, 26);
         Text = "-";
         TextSize = 13;
@@ -128,12 +129,12 @@ Panel.Sidebar {
 
     Group.ButtonsGroup {
         Position = (0, 240);
-        Renderer = &2;
+        Renderer = &3;
         Size = (100%, 60);
 
         Button.AddRmNodesBtn {
             Position = (2, 0);
-            Renderer = &1;
+            Renderer = &2;
             Size = (50% - 4, 26);
             Text = "add/rm nodes";
             TextSize = 9;
@@ -141,7 +142,7 @@ Panel.Sidebar {
 
         Button.MoveNodesBtn {
             Position = (50% + 2, 0);
-            Renderer = &1;
+            Renderer = &2;
             Size = (50% - 4, 26);
             Text = "move nodes";
             TextSize = 9;
@@ -149,7 +150,7 @@ Panel.Sidebar {
 
         Button.MoveCurveBtn {
             Position = (2, 30);
-            Renderer = &1;
+            Renderer = &2;
             Size = (50% - 4, 26);
             Text = "move curve";
             TextSize = 9;
@@ -157,7 +158,7 @@ Panel.Sidebar {
 
         Button.RotateCurveBtn {
             Position = (50% + 2, 30);
-            Renderer = &1;
+            Renderer = &2;
             Size = (50% - 4, 26);
             Text = "rotate curve";
             TextSize = 9;
@@ -166,7 +167,7 @@ Panel.Sidebar {
 
     Group.CurveOptions {
         Position = (0, 350);
-        Renderer = &2;
+        Renderer = &3;
         Size = (100%, 200);
 
         ComboBox.CurvesTypeComboBox {
@@ -227,6 +228,42 @@ Panel.Sidebar {
                     }
                 }
             }
+        }
+
+        Slider.PrecissionSlider {
+            ChangeValueOnScroll = true;
+            InvertedDirection = false;
+            Maximum = 0.01;
+            Minimum = 0.0001;
+            Position = (10, 25);
+            Size = (100% - 20, 20);
+            Step = 0;
+            Value = 0.0001;
+
+            Renderer {
+                BorderColor = #3C3C3C;
+                BorderColorHover = black;
+                Borders = (1, 1, 1, 1);
+                TextureThumb = None;
+                TextureThumbHover = None;
+                TextureTrack = None;
+                TextureTrackHover = None;
+                ThumbColor = #F5F5F5;
+                ThumbColorHover = white;
+                TrackColor = #F5F5F5;
+                TrackColorHover = white;
+            }
+        }
+
+        Label.SliderValue {
+            HorizontalAlignment = Center;
+            IgnoreMouseEvents = true;
+            Position = (25%, 25);
+            Renderer = &1;
+            Size = (50%, 20);
+            Text = "0.0001";
+            TextSize = 13;
+            VerticalAlignment = Center;
         }
     }
 }

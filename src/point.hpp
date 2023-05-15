@@ -14,6 +14,7 @@ class Node : public sf::Drawable
   sf::Vector2f getPosition() const;
   sf::FloatRect getBounds() const;
   void setPosition(float x, float y);
+  void move(float x, float y);
 
   sf::Vertex getVertex() const;
   

@@ -10,9 +10,9 @@ all: CurveEditor
 %.o: src/%.hpp
 	$(CXX) -c $< -o $@
 
-CurveEditor: point.o curve.o main.o
+CurveEditor: curve_functions.o point.o curve.o main.o
 	@echo "** Building editor"
-	$(CXX) -Wall -Wextra -ggdb -o CurveEditor main.o point.o curve.o $(LIBS)
+	$(CXX) -Wall -Wextra -ggdb -o CurveEditor main.o point.o curve.o curve_functions.o $(LIBS)
 
 clean:
 	@echo "** Removing object files and executable..."

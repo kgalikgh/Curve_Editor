@@ -37,12 +37,18 @@ bool Node::isSelected()
 
 sf::Vector2f Node::getPosition() const
 {
-  return pointSprite.getPosition();
+  auto pos = pointSprite.getPosition();
+  return sf::Vector2f(pos.x + nodeSideLength/2, pos.y + nodeSideLength/2);
 }
 
 void Node::setPosition(float x, float y)
 {
   pointSprite.setPosition(sf::Vector2f(x - nodeSideLength/2, y - nodeSideLength/2));
+}
+
+void Node::move(float x, float y)
+{
+  pointSprite.move(x,y);
 }
 
 sf::FloatRect Node::getBounds() const

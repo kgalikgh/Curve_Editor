@@ -3,6 +3,7 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <string>
+#include <cmath>
 #include <map>
 
 #include "constants.hpp"
@@ -18,11 +19,10 @@ static std::map<EditorMode, std::string> modeStr{
   {EditorMode::RotateCurve, "Rotate curve"}
 };
 
-
 Curve* activeCurve = nullptr;
 Node* activePoint = nullptr;
-
-sf::Vector2f initialMousePos;
+sf::Vector2f lastPos;
+sf::Vector2f rotationPoint = {0,0};
 static EditorMode currentMode = EditorMode::None;
 static int curvesNum = 0;
 
@@ -32,6 +32,37 @@ void moveNode(float x, float y)
   activePoint->setPosition(x, y);
   activeCurve->updateCurve();
 } 
+
+void moveCurve(float x, float y)
+{
+  if((activePoint == nullptr) || (activeCurve == nullptr)) return;
+  auto x_offset = x - lastPos.x;
+  auto y_offset = y - lastPos.y;
+  activeCurve->moveNodes(x_offset, y_offset);
+  lastPos = sf::Vector2f(x,y); 
+}
+
+void rotateCurve(float x, float y, int window_width)
+{
+  if((activeCurve == nullptr) || (rotationPoint.x == 0 && rotationPoint.y == 0)) return;
+  //[0-100] -> [0-2pi]
+  double ratio = 2000.0;
+  float angle = (x - rotationPoint.x) * 2.0 * M_PI / ratio;
+  std::cout<<angle<<std::endl;
+  if(angle >= 0.00001 || angle <= -0.00001)
+    activeCurve->rotateNodes(rotationPoint, angle); 
+}
+
+void selectRotationPoint(tgui::Vector2f pos)
+{
+  if(currentMode != EditorMode::RotateCurve) return;
+  rotationPoint = pos;
+}
+
+void deselectRotationPoint()
+{
+  rotationPoint = sf::Vector2f();
+}
 
 // Callbacks
 void addPoint(tgui::Vector2f pos)
@@ -51,18 +82,19 @@ void removePoint(tgui::Vector2f pos)
 
 void selectPoint(tgui::Vector2f pos)
 {
-  if(currentMode != EditorMode::MoveNodes) return;
+  if((currentMode != EditorMode::MoveNodes) && (currentMode != EditorMode::MoveCurve)) return;
   if(activePoint != nullptr) return;
   activePoint = activeCurve->findClickedNode(pos);
   if(activePoint)
   {
+    lastPos = pos;
     activePoint->select();
   }
 }
 
 void deselectAllPoints()
 {
-  if(currentMode != EditorMode::MoveNodes) return;
+  if((currentMode != EditorMode::MoveNodes) && (currentMode != EditorMode::MoveCurve)) return;
   if(activePoint == nullptr) return;
   activePoint->deselect();
   activePoint = nullptr;
@@ -79,6 +111,7 @@ void addCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   curves.push_back(c);
   for(auto& curve : curves)
     curve.deselect();
+  activeCurve = nullptr;
 } 
 
 void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
@@ -91,10 +124,13 @@ void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
   currentMode = EditorMode::None;
 } 
 
-void selectCurve(std::vector<Curve>& curves, tgui::ComboBox::Ptr curveType, int index)
+void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, int index)
 {
   if(curves.empty()) return;
   if(index > curves.size()) return; 
+  auto curveType = curvePropsGroup->get<tgui::ComboBox>("CurvesTypeComboBox");
+  auto stepSlider = curvePropsGroup->get<tgui::Slider>("PrecissionSlider");
+  auto sliderValue = curvePropsGroup->get<tgui::Label>("SliderValue");
   if(activeCurve)
   {
     activeCurve->deselect();
@@ -102,6 +138,9 @@ void selectCurve(std::vector<Curve>& curves, tgui::ComboBox::Ptr curveType, int 
   activeCurve = &curves[index];
   activeCurve->select();
   curveType->setSelectedItemByIndex((int)activeCurve->getCurveType());
+  stepSlider->setValue(activeCurve->getStep());
+  std::string s = std::to_string(activeCurve->getStep());
+  sliderValue->setText(s);
 }
 
 void switchMode(EditorMode mode, tgui::Label::Ptr modeText)
@@ -114,6 +153,14 @@ void switchMode(EditorMode mode, tgui::Label::Ptr modeText)
 void pickCurveType(int index)
 {
   activeCurve->changeCurveType((CurveType)index);
+}
+
+void updateCurveStep(tgui::Label::Ptr sliderVal, float newVal)
+{
+  if(activeCurve == nullptr) return;
+  std::string str = std::to_string(newVal);
+  sliderVal->setText(str);
+  activeCurve->setStep(newVal);
 }
 
 int main()
@@ -140,6 +187,9 @@ int main()
   auto rotateCurveButton = gui.get<tgui::Button>("RotateCurveBtn");
   auto modeText = gui.get<tgui::Label>("ModeText");
   auto curveTypesComboBox = gui.get<tgui::ComboBox>("CurvesTypeComboBox");
+  auto curveOptions = gui.get<tgui::Group>("CurveOptions");
+  auto stepSlider = gui.get<tgui::Slider>("PrecissionSlider");
+  auto stepValueLabel = gui.get<tgui::Label>("SliderValue");
 
   addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
   deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
@@ -149,13 +199,16 @@ int main()
   rotateCurveButton->onPress(&switchMode, EditorMode::RotateCurve, modeText);
   curveTypesComboBox->onItemSelect(&pickCurveType);
   curveTypesComboBox->addItem("Polyline");
-  curveTypesComboBox->addItem("Interpolated");
-
-  curvesListBox->onItemSelect(&selectCurve, std::ref(curves), curveTypesComboBox);
+  curveTypesComboBox->addItem("LagrangeInterpolation");
+  curveTypesComboBox->addItem("Bezier");
+  curvesListBox->onItemSelect(&selectCurve, std::ref(curves), curveOptions);
+  stepSlider->onValueChange(&updateCurveStep, stepValueLabel);
   
   canvas->onMousePress(&addPoint);
   canvas->onMousePress(&selectPoint);
+  canvas->onMousePress(&selectRotationPoint);
   canvas->onMouseRelease(&deselectAllPoints);
+  canvas->onMouseRelease(&deselectRotationPoint);
   canvas->onRightMousePress(&removePoint);
  
   // Main loop
@@ -180,14 +233,28 @@ int main()
           moveNode(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y);
         }
         break;
+        case EditorMode::MoveCurve:
+        if (event.type == sf::Event::MouseMoved)
+        {
+          moveCurve(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y);
+        }
+        break;
+        case EditorMode::RotateCurve:
+        if (event.type == sf::Event::MouseMoved)
+        {
+          rotateCurve(event.mouseMove.x - 0.2 * window.getSize().x, event.mouseMove.y, window.getSize().x);
+        }
+        break;
       }
     }
 
     // Set conditionally visible elements
     deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
+    curveOptions->setVisible(activeCurve != nullptr);
 
     window.clear();
     canvas->clear(drawingBackgroundColor);
+    
     for(auto const& curve : curves) 
     {
       canvas->draw(curve);

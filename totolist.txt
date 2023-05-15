@@ -1,7 +1,7 @@
 TODOs:
-1. Add curve types: Newton interpolation, NIFS3, OIFS3, Bezier
+1. Add curve types: Newton interpolation, NIFS3, OIFS3, Bezier (partially done)
 2. Abstract all editor wise objects to separate class
-3. Redesign UI
+3. Redesign UI (done)
 4. Add saving/loading the project
-5. Add moving/rotating/scaling whole curves
+5. Add moving/rotating whole curves (done)
 6. 

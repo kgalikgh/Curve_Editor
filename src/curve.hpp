@@ -5,9 +5,16 @@
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <SFML/Graphics.hpp>
 #include <functional>
+#include <map>
 #include "point.hpp"
+#include "curve_functions.hpp"
 
-enum CurveType {Polyline, LagrangeInterpolation};
+enum CurveType {Polyline, LagrangeInterpolation, Bezier};
+static std::map<CurveType, std::function<sf::VertexArray(const std::vector<Node>&, float)>> curveFunctions{
+  {Polyline, makePolyline},
+  {LagrangeInterpolation, makeLagrangeInterpolation},
+  {Bezier, makeBezier}
+};
 
 //TODO
 //Copy and Move constructors
@@ -24,8 +31,11 @@ class Curve : public sf::Drawable
   void removeClickedNode(tgui::Vector2f);
   void changeCurveType(CurveType);
   CurveType getCurveType();
+  void moveNodes(float, float);
+  void rotateNodes(sf::Vector2f, float);
+  void setStep(float);
+  float getStep();
 
-  //void moveAllPointsByOffset(sf::vector2f);
   void updateCurve();
   virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
@@ -37,7 +47,7 @@ class Curve : public sf::Drawable
   //TODO
   //Implement variable precision
   float drawStep;
-  std::function<sf::VertexArray(const std::vector<Node>&)> makeCurve;
+  std::function<sf::VertexArray(const std::vector<Node>&, float)> makeCurve;
 };
 
 #endif
