@@ -29,7 +29,7 @@ static EditorMode currentMode = EditorMode::None;
 static int curvesNum = 0;
 static const float indicatorRadius = 5.0;
 static sf::CircleShape divideIndicator(indicatorRadius, 30);
-static sf::Sprite* backgroundTexture = nullptr;
+static sf::Texture* backgroundTexture=nullptr;
 
 void moveNode(float x, float y)
 {
@@ -197,24 +197,25 @@ void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::
 
 void loadBackground()
 {
-  char const *  lFilterPatterns[2] = {"*.jpg", "*.png"};
-  auto path = tinyfd_openFileDialog ("Open Image","/home/kalej",2,lFilterPatterns,"image files",0);
+  char const *  lFilterPatterns[3] = {"*.jpg", "*.png", "*.jpeg"};
+  auto path = tinyfd_openFileDialog ("Open Image","/home/kalej",3,lFilterPatterns,"image files",0);
   if(path ==  NULL) return;
   sf::Image img;
   if(img.loadFromFile(std::string(path)))
   {
-    sf::Texture tex;
-    if(tex.loadFromImage(img))
+    backgroundTexture = new sf::Texture();
+    if(!backgroundTexture->loadFromImage(img))
     {
-      sf::Sprite s;
-      s.setTexture(tex, true);
-      backgroundTexture = &s;
+      delete backgroundTexture;
+      backgroundTexture = nullptr;
     }
   }
 }
 
 void clearBackground()
 {
+  if(backgroundTexture == nullptr) return;
+  delete backgroundTexture;
   backgroundTexture = nullptr;
 }
 
@@ -258,7 +259,7 @@ int main()
   auto divideButton = gui.get<tgui::Button>("DivideBtn");
 
   auto clrBackgroundBtn = gui.get<tgui::Button>("ClearBackgroundBtn");
-  auto loadBackgroundBtn = gui.get<tgui::Button>("ClearBackgroundBtn");
+  auto loadBackgroundBtn = gui.get<tgui::Button>("LoadBackgroundBtn");
 
   thicknessSlider->setMinimum(thickMin);
   thicknessSlider->setMaximum(thickMax);
@@ -348,7 +349,8 @@ int main()
     canvas->clear(drawingBackgroundColor);
     if(backgroundTexture)
     {
-        canvas->draw(*backgroundTexture);
+      sf::Sprite s(*backgroundTexture);
+      canvas->draw(s);
     }
     
     for(auto const& curve : curves) 
