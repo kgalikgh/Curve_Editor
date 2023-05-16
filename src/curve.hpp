@@ -10,7 +10,7 @@
 #include "curve_functions.hpp"
 
 enum CurveType {Polyline, LagrangeInterpolation, Bezier};
-static std::map<CurveType, std::function<sf::VertexArray(const std::vector<Node>&, float)>> curveFunctions{
+static std::map<CurveType, std::function<sf::VertexArray(const std::vector<Node>&, float, int)>> curveFunctions{
   {Polyline, makePolyline},
   {LagrangeInterpolation, makeLagrangeInterpolation},
   {Bezier, makeBezier}
@@ -33,10 +33,14 @@ class Curve : public sf::Drawable
   CurveType getCurveType();
   void moveNodes(float, float);
   void rotateNodes(sf::Vector2f, float);
-  void setStep(float);
-  float getStep();
+  void setThickness(float);
+  float getThickness();
+  void setStepMult(int);
+  int getStepMult();
 
   void updateCurve();
+  void elevate();
+  void divide(float, Curve&, Curve&);
   virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
   private:
@@ -46,8 +50,9 @@ class Curve : public sf::Drawable
   CurveType type;
   //TODO
   //Implement variable precision
-  float drawStep;
-  std::function<sf::VertexArray(const std::vector<Node>&, float)> makeCurve;
+  float thickness;
+  int stepMult;
+  std::function<sf::VertexArray(const std::vector<Node>&, float, int)> makeCurve;
 };
 
 #endif

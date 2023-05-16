@@ -12,7 +12,7 @@ all: CurveEditor
 
 CurveEditor: curve_functions.o point.o curve.o main.o
 	@echo "** Building editor"
-	$(CXX) -Wall -Wextra -ggdb -o CurveEditor main.o point.o curve.o curve_functions.o $(LIBS)
+	$(CXX) -O2 -Wall -Wextra -o CurveEditor main.o point.o curve.o curve_functions.o $(LIBS)
 
 clean:
 	@echo "** Removing object files and executable..."

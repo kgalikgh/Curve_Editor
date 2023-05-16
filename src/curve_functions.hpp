@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include "point.hpp"
 
-sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>&, float step);
-sf::VertexArray makePolyline(const std::vector<Node>&, float step);
-sf::VertexArray makeBezier(const std::vector<Node>&, float step);
+sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>&, float, int);
+sf::VertexArray makePolyline(const std::vector<Node>&, float, int);
+sf::VertexArray makeBezier(const std::vector<Node>&, float, int);
 #endif

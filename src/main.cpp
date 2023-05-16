@@ -10,13 +10,14 @@
 #include "curve.hpp"
 #include "point.hpp"
 
-enum EditorMode { None, AddRmNodes, MoveNodes, MoveCurve, RotateCurve};
+enum EditorMode { None, AddRmNodes, MoveNodes, MoveCurve, RotateCurve, DivideBezier};
 static std::map<EditorMode, std::string> modeStr{
   {EditorMode::None, "None"},
   {EditorMode::AddRmNodes, "Add/Remove nodes"},
   {EditorMode::MoveNodes, "Move nodes"},
   {EditorMode::MoveCurve, "Move curve"},
-  {EditorMode::RotateCurve, "Rotate curve"}
+  {EditorMode::RotateCurve, "Rotate curve"},
+  {EditorMode::DivideBezier, "Divide Bezier curve"}
 };
 
 Curve* activeCurve = nullptr;
@@ -129,18 +130,20 @@ void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, i
   if(curves.empty()) return;
   if(index > curves.size()) return; 
   auto curveType = curvePropsGroup->get<tgui::ComboBox>("CurvesTypeComboBox");
-  auto stepSlider = curvePropsGroup->get<tgui::Slider>("PrecissionSlider");
-  auto sliderValue = curvePropsGroup->get<tgui::Label>("SliderValue");
+  auto thicknessSlider = curvePropsGroup->get<tgui::Slider>("ThicknessSlider");
+  auto stepSlider = curvePropsGroup->get<tgui::Slider>("StepSlider");
+  auto stepVal = curvePropsGroup->get<tgui::Label>("StepValue");
   if(activeCurve)
   {
     activeCurve->deselect();
   }
   activeCurve = &curves[index];
   activeCurve->select();
-  curveType->setSelectedItemByIndex((int)activeCurve->getCurveType());
-  stepSlider->setValue(activeCurve->getStep());
-  std::string s = std::to_string(activeCurve->getStep());
-  sliderValue->setText(s);
+  int a = (int)activeCurve->getCurveType();
+  curveType->setSelectedItemByIndex(a);
+  thicknessSlider->setValue(activeCurve->getThickness());
+  stepSlider->setValue(activeCurve->getStepMult());
+  stepVal->setText(std::to_string(activeCurve->getStepMult()));
 }
 
 void switchMode(EditorMode mode, tgui::Label::Ptr modeText)
@@ -155,12 +158,42 @@ void pickCurveType(int index)
   activeCurve->changeCurveType((CurveType)index);
 }
 
-void updateCurveStep(tgui::Label::Ptr sliderVal, float newVal)
+void updateCurveThickness(float newVal)
+{
+  activeCurve->setThickness(newVal);
+}
+
+void updateStepMult(tgui::Label::Ptr stepVal, float newVal)
+{
+  activeCurve->setStepMult(newVal);
+  stepVal->setText(std::to_string((int)newVal));
+}
+
+void elevateBezier()
 {
   if(activeCurve == nullptr) return;
-  std::string str = std::to_string(newVal);
-  sliderVal->setText(str);
-  activeCurve->setStep(newVal);
+  activeCurve->elevate();
+}
+
+void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::Slider::Ptr divideSlider)
+{
+  if(activeCurve == nullptr) return;
+  float f = divideSlider->getValue();
+  if(f == 0.0 || f == 1.0) return;
+
+  int index = listBox->getSelectedItemIndex();
+  addCurve(curves, listBox);
+  addCurve(curves, listBox);
+  std::cout<<"added curves\n";
+  int n = curves.size();
+  Curve& c1 = curves[n-2];
+  Curve& c2 = curves[n-1];
+  std::cout<<"made references\n";
+  activeCurve->divide(f, c1, c2);
+  std::cout<<"calculated\n";
+  listBox->setSelectedItemByIndex(index);
+  removeCurve(curves, listBox);
+  std::cout<<"removed old curve\n";
 }
 
 int main()
@@ -180,16 +213,42 @@ int main()
   auto curvesListBox = gui.get<tgui::ListBox>("CurvesListBox");
   auto addButton = gui.get<tgui::Button>("AddCurveBtn");
   auto deleteButton = gui.get<tgui::Button>("DeleteCurveBtn");
+
   auto buttonsGroup = gui.get<tgui::Group>("ButtonsGroup");
   auto addRemoveNodesButton = gui.get<tgui::Button>("AddRmNodesBtn");
   auto moveNodesButton = gui.get<tgui::Button>("MoveNodesBtn");
   auto moveCurveButton = gui.get<tgui::Button>("MoveCurveBtn");
   auto rotateCurveButton = gui.get<tgui::Button>("RotateCurveBtn");
+
   auto modeText = gui.get<tgui::Label>("ModeText");
+
   auto curveTypesComboBox = gui.get<tgui::ComboBox>("CurvesTypeComboBox");
   auto curveOptions = gui.get<tgui::Group>("CurveOptions");
-  auto stepSlider = gui.get<tgui::Slider>("PrecissionSlider");
-  auto stepValueLabel = gui.get<tgui::Label>("SliderValue");
+  auto thicknessSlider = gui.get<tgui::Slider>("ThicknessSlider");
+  auto stepMultSlider = gui.get<tgui::Slider>("StepSlider");
+  auto stepVal = gui.get<tgui::Label>("StepValue");
+
+  
+  auto bezierOptionsGroup = gui.get<tgui::Group>("BezierOptions");
+  auto divideBezierGroup = gui.get<tgui::Group>("DivideBezierGroup");
+
+  auto elevateButton = gui.get<tgui::Button>("ElevateDegreeBtn");
+  auto divideModeButton = gui.get<tgui::Button>("DivideModeBtn");
+
+  auto divisionPointsSlider = gui.get<tgui::Slider>("DivisionPointSlider");
+  auto divideButton = gui.get<tgui::Button>("DivideBtn");
+
+  stepMultSlider->setMinimum(stepMultMin);
+  stepMultSlider->setMaximum(stepMultMax);
+  stepMultSlider->setStep(stepMultStep);
+  
+  thicknessSlider->setMinimum(thickMin);
+  thicknessSlider->setMaximum(thickMax);
+  thicknessSlider->setStep(thickStep);
+
+  divisionPointsSlider->setMinimum(divisionMin);
+  divisionPointsSlider->setMaximum(divisionMax);
+  divisionPointsSlider->setStep(divisionStep);
 
   addButton->onPress(&addCurve, std::ref(curves), curvesListBox);
   deleteButton->onPress(&removeCurve, std::ref(curves), curvesListBox);
@@ -197,12 +256,18 @@ int main()
   moveNodesButton->onPress(&switchMode, EditorMode::MoveNodes, modeText);
   moveCurveButton->onPress(&switchMode, EditorMode::MoveCurve, modeText);
   rotateCurveButton->onPress(&switchMode, EditorMode::RotateCurve, modeText);
+  divideModeButton->onPress(&switchMode, EditorMode::DivideBezier, modeText);
   curveTypesComboBox->onItemSelect(&pickCurveType);
   curveTypesComboBox->addItem("Polyline");
   curveTypesComboBox->addItem("LagrangeInterpolation");
   curveTypesComboBox->addItem("Bezier");
   curvesListBox->onItemSelect(&selectCurve, std::ref(curves), curveOptions);
-  stepSlider->onValueChange(&updateCurveStep, stepValueLabel);
+  thicknessSlider->onValueChange(&updateCurveThickness);
+  stepMultSlider->onValueChange(&updateStepMult, stepVal); 
+  
+
+  elevateButton->onPress(&elevateBezier);
+  divideButton->onPress(&divideBezier, std::ref(curves), curvesListBox, divisionPointsSlider);
   
   canvas->onMousePress(&addPoint);
   canvas->onMousePress(&selectPoint);
@@ -251,6 +316,11 @@ int main()
     // Set conditionally visible elements
     deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
     curveOptions->setVisible(activeCurve != nullptr);
+    if(activeCurve)
+    {
+      bezierOptionsGroup->setVisible(activeCurve->getCurveType() == CurveType::Bezier);
+      divideBezierGroup->setVisible(currentMode == EditorMode::DivideBezier);
+    }
 
     window.clear();
     canvas->clear(drawingBackgroundColor);

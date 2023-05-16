@@ -6,19 +6,41 @@
 #include <iostream>
 #include <cstdint>
 
-sf::VertexArray makePolyline(const std::vector<Node>& nodesList, float step)
+sf::VertexArray drawWithThickness(const std::vector<sf::Vector2f>& points, float thickness)
 {
-  (void)step;
-  auto points = sf::VertexArray(sf::LineStrip);
+  auto retArr = sf::VertexArray(sf::Quads);
+  if(points.size() < 2) return retArr;
+  for(int i = 0; i < points.size() - 1; i++)
+  {
+    auto pt1 = points[i];
+    auto pt2 = points[i+1];
+    sf::Vector2f direction = pt2 - pt1;
+    sf::Vector2f unitDir = direction/std::sqrt(direction.x * direction.x + direction.y * direction.y); 
+    sf::Vector2f unitPerpendicular(-unitDir.y, unitDir.x);
+
+    sf::Vector2f offset = (thickness/2.f) * unitPerpendicular;
+    retArr.append(sf::Vertex(pt1 + offset, curveColor));
+    retArr.append(sf::Vertex(pt2 + offset, curveColor));
+    retArr.append(sf::Vertex(pt2 - offset, curveColor));
+    retArr.append(sf::Vertex(pt1 - offset, curveColor));
+  }
+  return retArr; 
+}
+
+sf::VertexArray makePolyline(const std::vector<Node>& nodesList, float thickness, int stepMult)
+{
+  (void)stepMult;
+  std::vector<sf::Vector2f> points;
   for(auto& node : nodesList)
-    points.append(node.getVertex()); 
-  return points;
+    points.push_back(node.getPosition()); 
+  return drawWithThickness(points, thickness);
 }
 
 //Barycentric lagrange
-sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, float step)
+sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, float thickness, int stepMult)
 {
-  auto points = sf::VertexArray(sf::LineStrip);
+  if(nodesList.size() < 2) return sf::VertexArray();
+  std::vector<sf::Vector2f>points;
   int n = nodesList.size() - 1;
   double chebNodes[n+1];
 
@@ -42,6 +64,7 @@ sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, fl
       helpers[(k+1) * (n+1) + i] = helpers[k *(n+1) + i]-helpers[i * (n+1) + k];
     }
   } 
+  float step = (b - a)/stepMult;
 
   for(double t = a; t <= b; t+= step)
   {
@@ -75,19 +98,18 @@ sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, fl
       x/=divisor;
       y/=divisor;
     }
-    auto vert = sf::Vertex(sf::Vector2f(x,y));
-    vert.color = curveColor; 
-    points.append(vert);
+    points.push_back(sf::Vector2f(x,y));
   } 
   delete[] helpers;
-  return points;
+  return drawWithThickness(points, thickness);
 }
 
 
 // Bezier
-sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float step)
+sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float thickness, int stepMult)
 {
-  auto points = sf::VertexArray(sf::LineStrip);
+  if(nodesList.size() < 2) return sf::VertexArray();
+  std::vector<sf::Vector2f> points;
   int n = nodesList.size() - 1;
   
   double* w_x = new double[(n+1) * (n+1)];
@@ -95,12 +117,10 @@ sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float step)
   /*
     b[0][i] = nodesList[i]
     b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
-
   */
+  float step = 1.0/stepMult;
   for(float t = 0.0; t <= 1.0; t+= step)
   {
-    double x = 0;
-    double y = 0;
     for(int i = 0; i <= n; i++) 
     {
       auto pos = nodesList[i].getPosition();
@@ -116,11 +136,9 @@ sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float step)
         w_y[i * (n+1) + k] = t * w_y[(i-1)*(n+1) + k] + (1.0-t) *  w_y[(i-1)*(n+1) + k+1];
       } 
     }
-    auto vert = sf::Vertex(sf::Vector2f(w_x[n*(n+1)],w_y[n*(n+1)]));
-    vert.color = curveColor; 
-    points.append(vert);
+    points.push_back(sf::Vector2f(w_x[n*(n+1)],w_y[n*(n+1)]));
   }
   delete[] w_x;
   delete[] w_y;
-  return points;
+  return drawWithThickness(points,thickness);
 }

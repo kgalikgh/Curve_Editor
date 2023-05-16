@@ -1,10 +1,11 @@
 #include "curve.hpp"
+#include "constants.hpp"
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 #include <iostream>
 #include <cmath>
 
-Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline), drawStep(0.001) {}
+Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline), thickness(thickMin), stepMult(stepMultMin) {}
 
 void Curve::addNode(Node node)
 {
@@ -35,7 +36,7 @@ bool Curve::isSelected()
 
 void Curve::updateCurve()
 {
-  points = makeCurve(nodesList, drawStep);
+  points = makeCurve(nodesList, thickness, stepMult);
 }
 
 Node* Curve::findClickedNode(tgui::Vector2f pos)
@@ -100,20 +101,32 @@ CurveType Curve::getCurveType()
   return type;
 }
 
-void Curve::setStep(float val)
+void Curve::setThickness(float val)
 {
-  drawStep = val;
+  thickness = val;
   this->updateCurve();
 }
 
-float Curve::getStep()
+float Curve::getThickness()
 {
-  return drawStep;
+  return thickness;
+}
+
+void Curve::setStepMult(int val)
+{
+  stepMult = val;
+  this->updateCurve();
+}
+
+int Curve::getStepMult()
+{
+  return stepMult;
 }
 
 void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
   if(nodesList.empty()) return;
+  target.draw(points);
   if(selected)
   {
     for(auto const& node : nodesList)
@@ -121,6 +134,61 @@ void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
       target.draw(node);
     }
   }
-  target.draw(points);
 }
 
+void Curve::elevate()
+{
+  if(type != CurveType::Bezier) return;
+  std::vector<Node> newNodesList;
+  int n = nodesList.size() - 1;
+  newNodesList.push_back(nodesList[0]);
+  for(int i = 1; i < n+1; i++)
+  {
+    sf::Vector2f pos1 = nodesList[i-1].getPosition();
+    sf::Vector2f pos2 = nodesList[i].getPosition();
+    sf::Vector2f res = ((float)i * pos1 + (float)(n+1-i) * pos2)/(float)(n+1);
+    Node n(res);
+    newNodesList.push_back(n);
+  }
+  newNodesList.push_back(nodesList[n]);
+  nodesList = newNodesList;
+  this->updateCurve();
+}
+
+void Curve::divide(float t, Curve& c1, Curve& c2)
+{
+  int n = nodesList.size() - 1;
+  
+  double* w_x = new double[(n+1) * (n+1)];
+  double* w_y = new double[(n+1) * (n+1)];
+  std::cout<<"cool\n";
+  /*
+    b[0][i] = nodesList[i]
+    b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
+  */
+  for(int i = 0; i <= n; i++) 
+  {
+    auto pos = nodesList[i].getPosition();
+    w_x[i] = pos.x;
+    w_y[i] = pos.y;
+  }
+  
+  for(int i = 1 ; i <= n; ++i)
+  {
+    for(int k = 0; k <= n - i; k++)
+    {
+      w_x[i * (n+1) + k] = t * w_x[(i-1)*(n+1) + k] + (1.0-t) *  w_x[(i-1)*(n+1) + k+1];
+      w_y[i * (n+1) + k] = t * w_y[(i-1)*(n+1) + k] + (1.0-t) *  w_y[(i-1)*(n+1) + k+1];
+    } 
+  }
+
+  for(int i = 0; i <= n; i++)
+  {
+    Node n1(sf::Vector2f(w_x[i * (n+1)], w_y[i * (n+1)]));
+    Node n2(sf::Vector2f(w_x[(n-i) * (n+1) + i], w_y[(n-i) * (n+1) + i]));
+    c1.addNode(n1);
+    c2.addNode(n2);
+  }
+  delete[] w_x;
+  delete[] w_y;
+}
