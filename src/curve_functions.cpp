@@ -27,9 +27,8 @@ sf::VertexArray drawWithThickness(const std::vector<sf::Vector2f>& points, float
   return retArr; 
 }
 
-sf::VertexArray makePolyline(const std::vector<Node>& nodesList, float thickness, int stepMult)
+sf::VertexArray makePolyline(const std::vector<Node>& nodesList, float thickness)
 {
-  (void)stepMult;
   std::vector<sf::Vector2f> points;
   for(auto& node : nodesList)
     points.push_back(node.getPosition()); 
@@ -37,7 +36,7 @@ sf::VertexArray makePolyline(const std::vector<Node>& nodesList, float thickness
 }
 
 //Barycentric lagrange
-sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, float thickness, int stepMult)
+sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, float thickness)
 {
   if(nodesList.size() < 2) return sf::VertexArray();
   std::vector<sf::Vector2f>points;
@@ -64,7 +63,7 @@ sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, fl
       helpers[(k+1) * (n+1) + i] = helpers[k *(n+1) + i]-helpers[i * (n+1) + k];
     }
   } 
-  float step = (b - a)/stepMult;
+  float step = 0.001;
 
   for(double t = a; t <= b; t+= step)
   {
@@ -106,7 +105,7 @@ sf::VertexArray makeLagrangeInterpolation(const std::vector<Node>& nodesList, fl
 
 
 // Bezier
-sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float thickness, int stepMult)
+sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float thickness)
 {
   if(nodesList.size() < 2) return sf::VertexArray();
   std::vector<sf::Vector2f> points;
@@ -118,7 +117,7 @@ sf::VertexArray makeBezier(const std::vector<Node>& nodesList, float thickness, 
     b[0][i] = nodesList[i]
     b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
   */
-  float step = 1.0/stepMult;
+  float step = 0.001;
   for(float t = 0.0; t <= 1.0; t+= step)
   {
     for(int i = 0; i <= n; i++) 

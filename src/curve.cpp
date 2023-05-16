@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cmath>
 
-Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline), thickness(thickMin), stepMult(stepMultMin) {}
+Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline), thickness(thickMin) {}
 
 void Curve::addNode(Node node)
 {
@@ -36,7 +36,7 @@ bool Curve::isSelected()
 
 void Curve::updateCurve()
 {
-  points = makeCurve(nodesList, thickness, stepMult);
+  points = makeCurve(nodesList, thickness);
 }
 
 Node* Curve::findClickedNode(tgui::Vector2f pos)
@@ -155,13 +155,13 @@ void Curve::elevate()
   this->updateCurve();
 }
 
-void Curve::divide(float t, Curve& c1, Curve& c2)
+void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
 {
   int n = nodesList.size() - 1;
+  std::cout<<"cool\n";
   
   double* w_x = new double[(n+1) * (n+1)];
   double* w_y = new double[(n+1) * (n+1)];
-  std::cout<<"cool\n";
   /*
     b[0][i] = nodesList[i]
     b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
@@ -186,8 +186,8 @@ void Curve::divide(float t, Curve& c1, Curve& c2)
   {
     Node n1(sf::Vector2f(w_x[i * (n+1)], w_y[i * (n+1)]));
     Node n2(sf::Vector2f(w_x[(n-i) * (n+1) + i], w_y[(n-i) * (n+1) + i]));
-    c1.addNode(n1);
-    c2.addNode(n2);
+    c1.push_back(n1);
+    c2.push_back(n2);
   }
   delete[] w_x;
   delete[] w_y;

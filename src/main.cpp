@@ -131,8 +131,6 @@ void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, i
   if(index > curves.size()) return; 
   auto curveType = curvePropsGroup->get<tgui::ComboBox>("CurvesTypeComboBox");
   auto thicknessSlider = curvePropsGroup->get<tgui::Slider>("ThicknessSlider");
-  auto stepSlider = curvePropsGroup->get<tgui::Slider>("StepSlider");
-  auto stepVal = curvePropsGroup->get<tgui::Label>("StepValue");
   if(activeCurve)
   {
     activeCurve->deselect();
@@ -142,8 +140,6 @@ void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, i
   int a = (int)activeCurve->getCurveType();
   curveType->setSelectedItemByIndex(a);
   thicknessSlider->setValue(activeCurve->getThickness());
-  stepSlider->setValue(activeCurve->getStepMult());
-  stepVal->setText(std::to_string(activeCurve->getStepMult()));
 }
 
 void switchMode(EditorMode mode, tgui::Label::Ptr modeText)
@@ -163,12 +159,6 @@ void updateCurveThickness(float newVal)
   activeCurve->setThickness(newVal);
 }
 
-void updateStepMult(tgui::Label::Ptr stepVal, float newVal)
-{
-  activeCurve->setStepMult(newVal);
-  stepVal->setText(std::to_string((int)newVal));
-}
-
 void elevateBezier()
 {
   if(activeCurve == nullptr) return;
@@ -180,20 +170,25 @@ void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::
   if(activeCurve == nullptr) return;
   float f = divideSlider->getValue();
   if(f == 0.0 || f == 1.0) return;
-
-  int index = listBox->getSelectedItemIndex();
-  addCurve(curves, listBox);
-  addCurve(curves, listBox);
-  std::cout<<"added curves\n";
-  int n = curves.size();
-  Curve& c1 = curves[n-2];
-  Curve& c2 = curves[n-1];
-  std::cout<<"made references\n";
+  std::vector<Node> c1;
+  std::vector<Node> c2;
   activeCurve->divide(f, c1, c2);
-  std::cout<<"calculated\n";
-  listBox->setSelectedItemByIndex(index);
   removeCurve(curves, listBox);
-  std::cout<<"removed old curve\n";
+  addCurve(curves, listBox);
+  addCurve(curves, listBox);
+  int n = curves.size();
+  Curve* cur1 = &curves[n-2];
+  Curve* cur2 = &curves[n-1];
+  for(auto& node : c1)
+  {
+    cur1->addNode(node); 
+  }
+  for(auto& node : c2)
+  {
+    cur2->addNode(node);
+  }
+  cur1->changeCurveType(CurveType::Bezier);
+  cur2->changeCurveType(CurveType::Bezier);
 }
 
 int main()
@@ -225,9 +220,6 @@ int main()
   auto curveTypesComboBox = gui.get<tgui::ComboBox>("CurvesTypeComboBox");
   auto curveOptions = gui.get<tgui::Group>("CurveOptions");
   auto thicknessSlider = gui.get<tgui::Slider>("ThicknessSlider");
-  auto stepMultSlider = gui.get<tgui::Slider>("StepSlider");
-  auto stepVal = gui.get<tgui::Label>("StepValue");
-
   
   auto bezierOptionsGroup = gui.get<tgui::Group>("BezierOptions");
   auto divideBezierGroup = gui.get<tgui::Group>("DivideBezierGroup");
@@ -238,10 +230,6 @@ int main()
   auto divisionPointsSlider = gui.get<tgui::Slider>("DivisionPointSlider");
   auto divideButton = gui.get<tgui::Button>("DivideBtn");
 
-  stepMultSlider->setMinimum(stepMultMin);
-  stepMultSlider->setMaximum(stepMultMax);
-  stepMultSlider->setStep(stepMultStep);
-  
   thicknessSlider->setMinimum(thickMin);
   thicknessSlider->setMaximum(thickMax);
   thicknessSlider->setStep(thickStep);
@@ -263,7 +251,6 @@ int main()
   curveTypesComboBox->addItem("Bezier");
   curvesListBox->onItemSelect(&selectCurve, std::ref(curves), curveOptions);
   thicknessSlider->onValueChange(&updateCurveThickness);
-  stepMultSlider->onValueChange(&updateStepMult, stepVal); 
   
 
   elevateButton->onPress(&elevateBezier);
