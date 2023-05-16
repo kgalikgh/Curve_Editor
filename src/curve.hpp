@@ -37,6 +37,7 @@ class Curve : public sf::Drawable
   float getThickness();
   void setStepMult(int);
   int getStepMult();
+  sf::Vector2f getBezierVal(float);
 
   void updateCurve();
   void elevate();

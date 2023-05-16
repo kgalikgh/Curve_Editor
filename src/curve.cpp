@@ -192,3 +192,34 @@ void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
   delete[] w_x;
   delete[] w_y;
 }
+
+sf::Vector2f Curve::getBezierVal(float t)
+{
+  int n = nodesList.size() - 1;
+  std::cout<<"cool\n";
+  
+  double* w_x = new double[(n+1) * (n+1)];
+  double* w_y = new double[(n+1) * (n+1)];
+  /*
+    b[0][i] = nodesList[i]
+    b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
+  */
+  for(int i = 0; i <= n; i++) 
+  {
+    auto pos = nodesList[i].getPosition();
+    w_x[i] = pos.x;
+    w_y[i] = pos.y;
+  }
+  
+  for(int i = 1 ; i <= n; ++i)
+  {
+    for(int k = 0; k <= n - i; k++)
+    {
+      w_x[i * (n+1) + k] = t * w_x[(i-1)*(n+1) + k] + (1.0-t) *  w_x[(i-1)*(n+1) + k+1];
+      w_y[i * (n+1) + k] = t * w_y[(i-1)*(n+1) + k] + (1.0-t) *  w_y[(i-1)*(n+1) + k+1];
+    } 
+  }
+  delete[] w_x;
+  delete[] w_y;
+  return sf::Vector2f(w_x[n * (n+1)], w_y[n * (n+1)]);
+}

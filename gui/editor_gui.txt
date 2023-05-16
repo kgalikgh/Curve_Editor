@@ -296,33 +296,10 @@ Panel.Sidebar {
 
                 Button.DivideBtn {
                     Position = (70, 40);
+                    Renderer = &2;
                     Size = (50% - 4, 26);
                     Text = "divide curve";
                     TextSize = 9;
-
-                    Renderer {
-                        BackgroundColor = #F5F5F5;
-                        BackgroundColorDisabled = #E6E6E6;
-                        BackgroundColorDown = #EBEBEB;
-                        BackgroundColorHover = white;
-                        BorderColor = #3C3C3C;
-                        BorderColorDisabled = #7D7D7D;
-                        BorderColorDown = black;
-                        BorderColorFocused = #1E1EB4;
-                        BorderColorHover = black;
-                        Borders = (1, 1, 1, 1);
-                        TextColor = #3C3C3C;
-                        TextColorDisabled = #7D7D7D;
-                        TextColorDown = black;
-                        TextColorHover = black;
-                        Texture = None;
-                        TextureDisabled = None;
-                        TextureDown = None;
-                        TextureDownFocused = None;
-                        TextureDownHover = None;
-                        TextureFocused = None;
-                        TextureHover = None;
-                    }
                 }
             }
         }
@@ -336,6 +313,45 @@ Panel.Sidebar {
             Text = Thickness;
             TextSize = 13;
             VerticalAlignment = Center;
+        }
+    }
+
+    Button.LoadBackgroundBtn {
+        Position = (2, 6);
+        Renderer = &2;
+        Size = (50% - 4, 26);
+        Text = LoadBackground;
+        TextSize = 13;
+    }
+
+    Button.ClearBackgroundBtn {
+        Position = (50% + 2, 6);
+        Size = (50% - 4, 26);
+        Text = "Clear background";
+        TextSize = 13;
+
+        Renderer {
+            BackgroundColor = #F5F5F5;
+            BackgroundColorDisabled = #E6E6E6;
+            BackgroundColorDown = #EBEBEB;
+            BackgroundColorHover = white;
+            BorderColor = #3C3C3C;
+            BorderColorDisabled = #7D7D7D;
+            BorderColorDown = black;
+            BorderColorFocused = #1E1EB4;
+            BorderColorHover = black;
+            Borders = (1, 1, 1, 1);
+            TextColor = #3C3C3C;
+            TextColorDisabled = #7D7D7D;
+            TextColorDown = black;
+            TextColorHover = black;
+            Texture = None;
+            TextureDisabled = None;
+            TextureDown = None;
+            TextureDownFocused = None;
+            TextureDownHover = None;
+            TextureFocused = None;
+            TextureHover = None;
         }
     }
 }

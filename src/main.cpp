@@ -9,6 +9,7 @@
 #include "constants.hpp"
 #include "curve.hpp"
 #include "point.hpp"
+#include "tinyfiledialogs.h"
 
 enum EditorMode { None, AddRmNodes, MoveNodes, MoveCurve, RotateCurve, DivideBezier};
 static std::map<EditorMode, std::string> modeStr{
@@ -26,6 +27,9 @@ sf::Vector2f lastPos;
 sf::Vector2f rotationPoint = {0,0};
 static EditorMode currentMode = EditorMode::None;
 static int curvesNum = 0;
+static const float indicatorRadius = 5.0;
+static sf::CircleShape divideIndicator(indicatorRadius, 30);
+static sf::Sprite* backgroundTexture = nullptr;
 
 void moveNode(float x, float y)
 {
@@ -191,6 +195,29 @@ void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::
   cur2->changeCurveType(CurveType::Bezier);
 }
 
+void loadBackground()
+{
+  char const *  lFilterPatterns[2] = {"*.jpg", "*.png"};
+  auto path = tinyfd_openFileDialog ("Open Image","/home/kalej",2,lFilterPatterns,"image files",0);
+  if(path ==  NULL) return;
+  sf::Image img;
+  if(img.loadFromFile(std::string(path)))
+  {
+    sf::Texture tex;
+    if(tex.loadFromImage(img))
+    {
+      sf::Sprite s;
+      s.setTexture(tex, true);
+      backgroundTexture = &s;
+    }
+  }
+}
+
+void clearBackground()
+{
+  backgroundTexture = nullptr;
+}
+
 int main()
 {
   std::vector<Curve> curves; 
@@ -230,6 +257,9 @@ int main()
   auto divisionPointsSlider = gui.get<tgui::Slider>("DivisionPointSlider");
   auto divideButton = gui.get<tgui::Button>("DivideBtn");
 
+  auto clrBackgroundBtn = gui.get<tgui::Button>("ClearBackgroundBtn");
+  auto loadBackgroundBtn = gui.get<tgui::Button>("ClearBackgroundBtn");
+
   thicknessSlider->setMinimum(thickMin);
   thicknessSlider->setMaximum(thickMax);
   thicknessSlider->setStep(thickStep);
@@ -262,6 +292,12 @@ int main()
   canvas->onMouseRelease(&deselectAllPoints);
   canvas->onMouseRelease(&deselectRotationPoint);
   canvas->onRightMousePress(&removePoint);
+
+  divideIndicator.setFillColor(sf::Color::Red);
+
+  clrBackgroundBtn->onPress(&clearBackground);
+  loadBackgroundBtn->onPress(&loadBackground);
+
  
   // Main loop
   while (window.isOpen())
@@ -309,12 +345,21 @@ int main()
       divideBezierGroup->setVisible(currentMode == EditorMode::DivideBezier);
     }
 
-    window.clear();
     canvas->clear(drawingBackgroundColor);
+    if(backgroundTexture)
+    {
+        canvas->draw(*backgroundTexture);
+    }
     
     for(auto const& curve : curves) 
     {
       canvas->draw(curve);
+    }
+    if(currentMode == EditorMode::DivideBezier)
+    {
+      sf::Vector2f pos = activeCurve->getBezierVal(divisionPointsSlider->getValue());
+      divideIndicator.setPosition(pos.x - indicatorRadius, pos.y - indicatorRadius);
+      canvas->draw(divideIndicator);
     }
     canvas->display();
     gui.draw();

@@ -4,15 +4,18 @@ CXX := g++
 
 all: CurveEditor 
 
+tinyfiledialogs.o:
+	gcc -c src/tinyfiledialogs.c -o tinyfiledialogs.o
+
 %.o: src/%.cpp
 	$(CXX) -c $< -o $@
 
 %.o: src/%.hpp
 	$(CXX) -c $< -o $@
 
-CurveEditor: curve_functions.o point.o curve.o main.o
+CurveEditor: tinyfiledialogs.o curve_functions.o point.o curve.o main.o
 	@echo "** Building editor"
-	$(CXX) -O2 -Wall -Wextra -o CurveEditor main.o point.o curve.o curve_functions.o $(LIBS)
+	$(CXX) -O2 -Wall -Wextra -o CurveEditor main.o point.o curve.o curve_functions.o tinyfiledialogs.o $(LIBS)
 
 clean:
 	@echo "** Removing object files and executable..."
