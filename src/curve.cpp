@@ -155,10 +155,66 @@ void Curve::elevate()
   this->updateCurve();
 }
 
+
+uint64_t n_choose_k(int k, int n)
+{
+  uint64_t ret = 1;
+  uint64_t div = 1;
+  for(int i = n-k+1; i <= n; i++) ret *= i;
+  for(int i = 2; i <= k; i++) div *= i;
+  return ret/div;
+}
+
+double get_coeff(int i, int n)
+{
+  uint64_t sum = 0;
+  for(int j = 0; j <= i; j++)
+  {
+    sum += n_choose_k(2*j, 2*n);
+  }
+  return (double)sum/(1<<(2*n-1));
+}
+
+void Curve::deelevate()
+{
+  if(type != CurveType::Bezier) return;
+  std::vector<Node> lower;
+  std::vector<Node> upper;
+  int n = nodesList.size() - 1;
+  
+  //Elements from 0 to n/2 ->  n/2 + 1 elements
+  lower.push_back(nodesList[0]);
+  for(int i = 1; i < n; i++)
+  {
+    sf::Vector2f v = (float)n/(n-i) * nodesList[i].getPosition();
+    sf::Vector2f w = (float)i/(n-i) * lower[i-1].getPosition();
+    lower.push_back(Node(v - w));
+  }
+
+  //Elements from n/2 + 1 to n -> n/2 elements (nani)
+  upper.push_back(nodesList[n]);
+  for(int i = n-1; i > 0; i--)
+  {
+    sf::Vector2f v = (float)n/i * nodesList[i].getPosition();
+    sf::Vector2f w = (float)(n-i)/i * upper[n - 1 - i].getPosition();
+    upper.push_back(Node(v - w));
+  }
+
+  nodesList.clear();
+  for(int i = 0; i < n; i++)
+  {
+    float lambda = get_coeff(i, n);
+    sf::Vector2f p1 = (1 - lambda) * lower[i].getPosition();
+    sf::Vector2f p2 = lambda * upper[n-1-i].getPosition();
+    nodesList.push_back(Node(p1 + p2));
+  }
+
+  this->updateCurve();
+}
+
 void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
 {
   int n = nodesList.size() - 1;
-  std::cout<<"cool\n";
   
   double* w_x = new double[(n+1) * (n+1)];
   double* w_y = new double[(n+1) * (n+1)];
@@ -196,7 +252,6 @@ void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
 sf::Vector2f Curve::getBezierVal(float t)
 {
   int n = nodesList.size() - 1;
-  std::cout<<"cool\n";
   
   double* w_x = new double[(n+1) * (n+1)];
   double* w_y = new double[(n+1) * (n+1)];

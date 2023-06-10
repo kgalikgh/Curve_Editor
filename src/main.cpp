@@ -27,8 +27,10 @@ sf::Vector2f lastPos;
 sf::Vector2f rotationPoint = {0,0};
 static EditorMode currentMode = EditorMode::None;
 static int curvesNum = 0;
+static float lastAngle = 0.0f;
 static const float indicatorRadius = 5.0;
 static sf::CircleShape divideIndicator(indicatorRadius, 30);
+static sf::CircleShape rotationPointSprite(indicatorRadius, 30);
 static sf::Texture* backgroundTexture=nullptr;
 
 void moveNode(float x, float y)
@@ -51,21 +53,23 @@ void rotateCurve(float x, float y, int window_width)
 {
   if((activeCurve == nullptr) || (rotationPoint.x == 0 && rotationPoint.y == 0)) return;
   //[0-100] -> [0-2pi]
-  double ratio = 2000.0;
+  double ratio = 500.0;
   float angle = (x - rotationPoint.x) * 2.0 * M_PI / ratio;
-  std::cout<<angle<<std::endl;
-  if(angle >= 0.00001 || angle <= -0.00001)
-    activeCurve->rotateNodes(rotationPoint, angle); 
+  activeCurve->rotateNodes(rotationPoint, lastAngle - angle); 
+  lastAngle = angle;
 }
 
 void selectRotationPoint(tgui::Vector2f pos)
 {
   if(currentMode != EditorMode::RotateCurve) return;
+  lastAngle = 0.0f;
   rotationPoint = pos;
+  rotationPointSprite.setPosition(rotationPoint);
 }
 
 void deselectRotationPoint()
 {
+  if(currentMode != EditorMode::RotateCurve) return;
   rotationPoint = sf::Vector2f();
 }
 
@@ -169,6 +173,12 @@ void elevateBezier()
   activeCurve->elevate();
 }
 
+void reduceBezier()
+{
+  if(activeCurve == nullptr) return;
+  activeCurve->deelevate();
+}
+
 void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::Slider::Ptr divideSlider)
 {
   if(activeCurve == nullptr) return;
@@ -253,6 +263,7 @@ int main()
   auto divideBezierGroup = gui.get<tgui::Group>("DivideBezierGroup");
 
   auto elevateButton = gui.get<tgui::Button>("ElevateDegreeBtn");
+  auto reduceButton = gui.get<tgui::Button>("ReduceDegreeBtn");
   auto divideModeButton = gui.get<tgui::Button>("DivideModeBtn");
 
   auto divisionPointsSlider = gui.get<tgui::Slider>("DivisionPointSlider");
@@ -285,6 +296,7 @@ int main()
   
 
   elevateButton->onPress(&elevateBezier);
+  reduceButton->onPress(&reduceBezier);
   divideButton->onPress(&divideBezier, std::ref(curves), curvesListBox, divisionPointsSlider);
   
   canvas->onMousePress(&addPoint);
@@ -295,6 +307,7 @@ int main()
   canvas->onRightMousePress(&removePoint);
 
   divideIndicator.setFillColor(sf::Color::Red);
+  rotationPointSprite.setFillColor(sf::Color::Red);
 
   clrBackgroundBtn->onPress(&clearBackground);
   loadBackgroundBtn->onPress(&loadBackground);
@@ -362,6 +375,10 @@ int main()
       sf::Vector2f pos = activeCurve->getBezierVal(divisionPointsSlider->getValue());
       divideIndicator.setPosition(pos.x - indicatorRadius, pos.y - indicatorRadius);
       canvas->draw(divideIndicator);
+    }
+    if(currentMode == EditorMode::RotateCurve)
+    {
+      canvas->draw(rotationPointSprite);
     }
     canvas->display();
     gui.draw();

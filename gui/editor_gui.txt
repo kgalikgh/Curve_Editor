@@ -182,7 +182,7 @@ Panel.Sidebar {
     Group.CurveOptions {
         Position = (0, 330);
         Renderer = &3;
-        Size = (100%, 230);
+        Size = (100%, 260);
 
         ComboBox.CurvesTypeComboBox {
             ChangeItemOnScroll = false;
@@ -278,7 +278,7 @@ Panel.Sidebar {
             }
 
             Group.DivideBezierGroup {
-                Position = (0, 40);
+                Position = (0, 50);
                 Renderer = &3;
                 Size = (100%, 100);
 
@@ -287,7 +287,7 @@ Panel.Sidebar {
                     InvertedDirection = false;
                     Maximum = 1;
                     Minimum = 0;
-                    Position = (10, 10);
+                    Position = (10, 20);
                     Renderer = &4;
                     Size = (100% - 20, 16);
                     Step = 0.01;
@@ -295,12 +295,20 @@ Panel.Sidebar {
                 }
 
                 Button.DivideBtn {
-                    Position = (70, 40);
+                    Position = (25%, 50);
                     Renderer = &2;
                     Size = (50% - 4, 26);
                     Text = "divide curve";
                     TextSize = 9;
                 }
+            }
+
+            Button.ReduceDegreeBtn {
+                Position = (2, 30);
+                Renderer = &2;
+                Size = (50% - 4, 26);
+                Text = "reduce degree";
+                TextSize = 9;
             }
         }
 
@@ -326,32 +334,9 @@ Panel.Sidebar {
 
     Button.ClearBackgroundBtn {
         Position = (50% + 2, 6);
+        Renderer = &2;
         Size = (50% - 4, 26);
         Text = "Clear background";
         TextSize = 13;
-
-        Renderer {
-            BackgroundColor = #F5F5F5;
-            BackgroundColorDisabled = #E6E6E6;
-            BackgroundColorDown = #EBEBEB;
-            BackgroundColorHover = white;
-            BorderColor = #3C3C3C;
-            BorderColorDisabled = #7D7D7D;
-            BorderColorDown = black;
-            BorderColorFocused = #1E1EB4;
-            BorderColorHover = black;
-            Borders = (1, 1, 1, 1);
-            TextColor = #3C3C3C;
-            TextColorDisabled = #7D7D7D;
-            TextColorDown = black;
-            TextColorHover = black;
-            Texture = None;
-            TextureDisabled = None;
-            TextureDown = None;
-            TextureDownFocused = None;
-            TextureDownHover = None;
-            TextureFocused = None;
-            TextureHover = None;
-        }
     }
 }

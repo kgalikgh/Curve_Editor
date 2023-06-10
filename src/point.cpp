@@ -4,30 +4,26 @@
 Node::Node(sf::Vector2f pos) : selected(false)
 {
   pointSprite = sf::RectangleShape(sf::Vector2f(nodeSideLength, nodeSideLength));
-  pointSprite.setFillColor(nodeColor);
+  pointSprite.setFillColor(defaultNodeColor);
   pointSprite.setPosition(pos.x - nodeSideLength/2, pos.y - nodeSideLength/2);
 }
 
-sf::Vertex Node::getVertex() const
+Node::Node(const Node& n)
 {
-  sf::Vector2f pos = pointSprite.getPosition();
-  pos.x += nodeSideLength/2;
-  pos.y += nodeSideLength/2;
-  sf::Vertex vert(pos);
-  vert.color = curveColor; 
-  return vert;
+  selected = n.selected;
+  pointSprite = sf::RectangleShape(n.pointSprite);
 }
 
 void Node::select()
 {
   selected = true;
-  pointSprite.setFillColor(pickedNodeColor);
+  pointSprite.setFillColor(selectedNodeColor);
 }
 
 void Node::deselect()
 {
   selected = false;
-  pointSprite.setFillColor(nodeColor);
+  pointSprite.setFillColor(defaultNodeColor);
 }
 
 bool Node::isSelected()

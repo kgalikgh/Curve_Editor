@@ -41,6 +41,7 @@ class Curve : public sf::Drawable
 
   void updateCurve();
   void elevate();
+  void deelevate();
   void divide(float, std::vector<Node>&, std::vector<Node>&);
   virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
