@@ -21,7 +21,7 @@ static std::map<EditorMode, std::string> modeStr{
   {EditorMode::DivideBezier, "Divide Bezier curve"}
 };
 
-Curve* activeCurve = nullptr;
+std::shared_ptr<Curve> activeCurve;
 Node* activePoint = nullptr;
 sf::Vector2f lastPos;
 sf::Vector2f rotationPoint = {0,0};
@@ -35,14 +35,14 @@ static sf::Texture* backgroundTexture=nullptr;
 
 void moveNode(float x, float y)
 {
-  if((activePoint == nullptr) || (activeCurve == nullptr)) return;
+  if((activePoint == nullptr) || (!activeCurve)) return;
   activePoint->setPosition(x, y);
   activeCurve->updateCurve();
 } 
 
 void moveCurve(float x, float y)
 {
-  if((activePoint == nullptr) || (activeCurve == nullptr)) return;
+  if((activePoint == nullptr) || (!activeCurve)) return;
   auto x_offset = x - lastPos.x;
   auto y_offset = y - lastPos.y;
   activeCurve->moveNodes(x_offset, y_offset);
@@ -51,7 +51,7 @@ void moveCurve(float x, float y)
 
 void rotateCurve(float x, float y, int window_width)
 {
-  if((activeCurve == nullptr) || (rotationPoint.x == 0 && rotationPoint.y == 0)) return;
+  if((!activeCurve) || (rotationPoint.x == 0 && rotationPoint.y == 0)) return;
   //[0-100] -> [0-2pi]
   double ratio = 500.0;
   float angle = (x - rotationPoint.x) * 2.0 * M_PI / ratio;
@@ -77,7 +77,7 @@ void deselectRotationPoint()
 void addPoint(tgui::Vector2f pos)
 {
   if(currentMode != EditorMode::AddRmNodes) return;
-  if(activeCurve == nullptr) return;
+  if(!activeCurve) return;
   Node node(pos);
   activeCurve->addNode(node);
 }
@@ -85,7 +85,7 @@ void addPoint(tgui::Vector2f pos)
 void removePoint(tgui::Vector2f pos)
 {
   if(currentMode != EditorMode::AddRmNodes) return;
-  if(activeCurve == nullptr) return;
+  if(!activeCurve) return;
   activeCurve->removeClickedNode(pos); 
 }
 
@@ -109,31 +109,31 @@ void deselectAllPoints()
   activePoint = nullptr;
 }
 
-void addCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
+void addCurve(std::vector<std::shared_ptr<Curve>>& curves, tgui::ListBox::Ptr listBox)
 {
   std::string s = "Curve " + std::to_string(curvesNum);
   curvesNum++;
   listBox->addItem(s);
   listBox->setSelectedItemByIndex(-1);
   currentMode = EditorMode::None;
-  Curve c;
-  curves.push_back(c);
+  curves.push_back(std::make_shared<Curve>());
   for(auto& curve : curves)
-    curve.deselect();
-  activeCurve = nullptr;
+    curve->deselect();
+  activeCurve.reset();
 } 
 
-void removeCurve(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox)
+void removeCurve(std::vector<std::shared_ptr<Curve>>& curves, tgui::ListBox::Ptr listBox)
 {
-  activeCurve = nullptr;
+  activeCurve.reset();
   int index = listBox->getSelectedItemIndex();
+  curves[index].reset();
   curves.erase(curves.begin() + index);
   listBox->removeItemByIndex(index);
   listBox->setSelectedItemByIndex(-1);
   currentMode = EditorMode::None;
 } 
 
-void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, int index)
+void selectCurve(std::vector<std::shared_ptr<Curve>>& curves, tgui::Group::Ptr curvePropsGroup, int index)
 {
   if(curves.empty()) return;
   if(index > curves.size()) return; 
@@ -143,7 +143,7 @@ void selectCurve(std::vector<Curve>& curves, tgui::Group::Ptr curvePropsGroup, i
   {
     activeCurve->deselect();
   }
-  activeCurve = &curves[index];
+  activeCurve = curves[index];
   activeCurve->select();
   int a = (int)activeCurve->getCurveType();
   curveType->setSelectedItemByIndex(a);
@@ -169,19 +169,19 @@ void updateCurveThickness(float newVal)
 
 void elevateBezier()
 {
-  if(activeCurve == nullptr) return;
+  if(!activeCurve) return;
   activeCurve->elevate();
 }
 
 void reduceBezier()
 {
-  if(activeCurve == nullptr) return;
+  if(!activeCurve) return;
   activeCurve->deelevate();
 }
 
-void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::Slider::Ptr divideSlider)
+void divideBezier(std::vector<std::shared_ptr<Curve>>& curves, tgui::ListBox::Ptr listBox, tgui::Slider::Ptr divideSlider)
 {
-  if(activeCurve == nullptr) return;
+  if(!activeCurve) return;
   float f = divideSlider->getValue();
   if(f == 0.0 || f == 1.0) return;
   std::vector<Node> c1;
@@ -191,8 +191,8 @@ void divideBezier(std::vector<Curve>& curves, tgui::ListBox::Ptr listBox, tgui::
   addCurve(curves, listBox);
   addCurve(curves, listBox);
   int n = curves.size();
-  Curve* cur1 = &curves[n-2];
-  Curve* cur2 = &curves[n-1];
+  std::shared_ptr<Curve> cur1 = curves[n-2];
+  std::shared_ptr<Curve> cur2 = curves[n-1];
   for(auto& node : c1)
   {
     cur1->addNode(node); 
@@ -231,7 +231,7 @@ void clearBackground()
 
 int main()
 {
-  std::vector<Curve> curves; 
+  std::vector<std::shared_ptr<Curve>> curves; 
 
   // Setup window
   sf::RenderWindow window{{1366, 768}, "TGUI example - SFML_GRAPHICS backend"};
@@ -352,7 +352,7 @@ int main()
 
     // Set conditionally visible elements
     deleteButton->setEnabled(curvesListBox->getSelectedItemIndex() != -1);
-    curveOptions->setVisible(activeCurve != nullptr);
+    curveOptions->setVisible(activeCurve ? true : false);
     if(activeCurve)
     {
       bezierOptionsGroup->setVisible(activeCurve->getCurveType() == CurveType::Bezier);
@@ -368,7 +368,7 @@ int main()
     
     for(auto const& curve : curves) 
     {
-      canvas->draw(curve);
+      canvas->draw(*curve);
     }
     if(currentMode == EditorMode::DivideBezier)
     {
