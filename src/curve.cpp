@@ -288,7 +288,7 @@ sf::VertexArray drawWithThickness(const std::vector<sf::Vector2f>& points, float
 
 void PolylineCurve::updateCurve()
 {
-  std::cout<<"I'm here\n";
+  std::cout<<"Drawing polyline\n";
   std::vector<sf::Vector2f> newPoints;
   for(const auto& node : nodesList)
     newPoints.push_back(node.getPosition()); 
@@ -299,6 +299,7 @@ void PolylineCurve::updateCurve()
 void BezierCurve::updateCurve()
 {
   if(nodesList.size() < 2) points = sf::VertexArray();
+  std::cout<<"Drawing bezier\n";
   std::vector<sf::Vector2f> newPoints;
   int n = nodesList.size() - 1;
   
