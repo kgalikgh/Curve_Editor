@@ -13,9 +13,9 @@ tinyfiledialogs.o:
 %.o: src/%.hpp
 	$(CXX) -c $< -o $@
 
-CurveEditor: tinyfiledialogs.o curve_functions.o point.o curve.o main.o
+CurveEditor: tinyfiledialogs.o point.o curve.o main.o
 	@echo "** Building editor"
-	$(CXX) -O2 -Wall -Wextra -o CurveEditor main.o point.o curve.o curve_functions.o tinyfiledialogs.o $(LIBS)
+	$(CXX) -O2 -Wall -Wextra -o CurveEditor main.o point.o curve.o tinyfiledialogs.o $(LIBS)
 
 clean:
 	@echo "** Removing object files and executable..."

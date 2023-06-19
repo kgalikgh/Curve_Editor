@@ -5,12 +5,12 @@
 #include <iostream>
 #include <cmath>
 
-Curve::Curve() : selected(false), type(CurveType::Polyline), makeCurve(makePolyline), thickness(thickMin) {}
+Curve::Curve(CurveType _type) : selected(false), type(_type), thickness(thickMin) {}
 
 void Curve::addNode(Node node)
 {
   nodesList.push_back(node);
-  updateCurve();
+  this->updateCurve();
 }
 
 void Curve::removeNode(int index)
@@ -29,14 +29,9 @@ void Curve::deselect()
   selected = false;
 }
 
-bool Curve::isSelected()
+bool Curve::isSelected() const
 {
   return selected;
-}
-
-void Curve::updateCurve()
-{
-  points = makeCurve(nodesList, thickness);
 }
 
 Node* Curve::findClickedNode(tgui::Vector2f pos)
@@ -66,13 +61,6 @@ void Curve::removeClickedNode(tgui::Vector2f pos)
       break;
     }
   }
-}
-
-void Curve::changeCurveType(CurveType newType)
-{
-  type = newType;
-  makeCurve = curveFunctions[type];
-  this->updateCurve();
 }
 
 void Curve::moveNodes(float x, float y)
@@ -112,20 +100,10 @@ float Curve::getThickness()
   return thickness;
 }
 
-void Curve::setStepMult(int val)
-{
-  stepMult = val;
-  this->updateCurve();
-}
-
-int Curve::getStepMult()
-{
-  return stepMult;
-}
-
 void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
   if(nodesList.empty()) return;
+  std::cout<<nodesList.size()<<" "<<points.getVertexCount()<<std::endl;
   target.draw(points);
   if(selected)
   {
@@ -136,7 +114,15 @@ void Curve::draw(sf::RenderTarget& target, sf::RenderStates states) const
   }
 }
 
-void Curve::elevate()
+std::vector<Node> Curve::getNodes() const { return nodesList; }
+
+Curve::Curve(CurveType t, const Curve& c) : Curve(t) 
+{
+  nodesList = c.getNodes();
+  selected = c.isSelected();
+}
+
+void BezierCurve::elevate()
 {
   if(type != CurveType::Bezier) return;
   std::vector<Node> newNodesList;
@@ -175,7 +161,7 @@ double get_coeff(int i, int n)
   return (double)sum/(1<<(2*n-1));
 }
 
-void Curve::deelevate()
+void BezierCurve::deelevate()
 {
   if(type != CurveType::Bezier) return;
   std::vector<Node> lower;
@@ -212,7 +198,7 @@ void Curve::deelevate()
   this->updateCurve();
 }
 
-void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
+void BezierCurve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
 {
   int n = nodesList.size() - 1;
   
@@ -249,7 +235,7 @@ void Curve::divide(float t, std::vector<Node>& c1, std::vector<Node>& c2)
   delete[] w_y;
 }
 
-sf::Vector2f Curve::getBezierVal(float t)
+sf::Vector2f BezierCurve::getBezierVal(float t)
 {
   int n = nodesList.size() - 1;
   
@@ -277,4 +263,72 @@ sf::Vector2f Curve::getBezierVal(float t)
   delete[] w_x;
   delete[] w_y;
   return sf::Vector2f(w_x[n * (n+1)], w_y[n * (n+1)]);
+}
+
+sf::VertexArray drawWithThickness(const std::vector<sf::Vector2f>& points, float thickness)
+{
+  auto retArr = sf::VertexArray(sf::Quads);
+  if(points.size() < 2) return retArr;
+  for(int i = 0; i < points.size() - 1; i++)
+  {
+    auto pt1 = points[i];
+    auto pt2 = points[i+1];
+    sf::Vector2f direction = pt2 - pt1;
+    sf::Vector2f unitDir = direction/std::sqrt(direction.x * direction.x + direction.y * direction.y); 
+    sf::Vector2f unitPerpendicular(-unitDir.y, unitDir.x);
+
+    sf::Vector2f offset = (thickness/2.f) * unitPerpendicular;
+    retArr.append(sf::Vertex(pt1 + offset, curveColor));
+    retArr.append(sf::Vertex(pt2 + offset, curveColor));
+    retArr.append(sf::Vertex(pt2 - offset, curveColor));
+    retArr.append(sf::Vertex(pt1 - offset, curveColor));
+  }
+  return retArr; 
+}
+
+void PolylineCurve::updateCurve()
+{
+  std::cout<<"I'm here\n";
+  std::vector<sf::Vector2f> newPoints;
+  for(const auto& node : nodesList)
+    newPoints.push_back(node.getPosition()); 
+  points = drawWithThickness(newPoints, thickness);
+}
+
+// Bezier
+void BezierCurve::updateCurve()
+{
+  if(nodesList.size() < 2) points = sf::VertexArray();
+  std::vector<sf::Vector2f> newPoints;
+  int n = nodesList.size() - 1;
+  
+  double* w_x = new double[(n+1) * (n+1)];
+  double* w_y = new double[(n+1) * (n+1)];
+  /*
+    b[0][i] = nodesList[i]
+    b[1][i] = b[0][i] * t + b[0][i+1] * (1-t)
+  */
+  float step = 0.001;
+  for(float t = 0.0; t <= 1.0; t+= step)
+  {
+    for(int i = 0; i <= n; i++) 
+    {
+      auto pos = nodesList[i].getPosition();
+      w_x[i] = pos.x;
+      w_y[i] = pos.y;
+    }
+  
+    for(int i = 1 ; i <= n; ++i)
+    {
+      for(int k = 0; k <= n - i; k++)
+      {
+        w_x[i * (n+1) + k] = t * w_x[(i-1)*(n+1) + k] + (1.0-t) *  w_x[(i-1)*(n+1) + k+1];
+        w_y[i * (n+1) + k] = t * w_y[(i-1)*(n+1) + k] + (1.0-t) *  w_y[(i-1)*(n+1) + k+1];
+      } 
+    }
+    newPoints.push_back(sf::Vector2f(w_x[n*(n+1)],w_y[n*(n+1)]));
+  }
+  delete[] w_x;
+  delete[] w_y;
+  points = drawWithThickness(newPoints,thickness);
 }
