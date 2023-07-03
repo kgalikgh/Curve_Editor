@@ -191,7 +191,7 @@ void Curve::deelevate()
     lower.push_back(Node(v - w));
   }
 
-  //Elements from n/2 + 1 to n -> n/2 elements (nani)
+  //Elements from n/2 + 1 to n -> n/2 elements
   upper.push_back(nodesList[n]);
   for(int i = n-1; i > 0; i--)
   {

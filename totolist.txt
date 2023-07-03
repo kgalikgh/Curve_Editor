@@ -1,4 +1,0 @@
-TODOs:
-1. Add curve types: NIFS3, OIFS3 (partially done)
-2. Add background pics
-3. Save/Load the file

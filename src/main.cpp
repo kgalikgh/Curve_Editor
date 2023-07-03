@@ -312,7 +312,6 @@ int main()
   clrBackgroundBtn->onPress(&clearBackground);
   loadBackgroundBtn->onPress(&loadBackground);
 
- 
   // Main loop
   while (window.isOpen())
   {
